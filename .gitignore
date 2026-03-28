@@ -1,0 +1,47 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+backend/.venv/
+.venv/
+venv/
+
+# Secrets and local env (never commit real credentials)
+backend/.env
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Personal / local-only notes (not versioned)
+README-GIT.md
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Packaging / build
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Coverage / reports
+htmlcov/
+.coverage
+coverage.xml
+
+# Logs
+*.log

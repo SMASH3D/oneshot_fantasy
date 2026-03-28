@@ -1,12 +1,6 @@
 """
-Bounded contexts (planned packages):
+Domain layer (bounded contexts).
 
-- leagues: league lifecycle, membership, settings
-- draft: snake draft order, picks, player pool
-- tournament: bracket rounds, scheduling hooks
-- lineup: per-round selections and use-once rules
-- scoring: sport-agnostic score calculation (strategy + adapters)
-- leaderboard: aggregates and rankings
-
-Implement incrementally; keep HTTP out of these packages.
+Subpackages: tournament, fantasy, scoring, ingestion.
+HTTP and SQLAlchemy must not appear here — use ports (Protocols) instead.
 """

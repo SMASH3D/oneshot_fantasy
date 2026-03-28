@@ -77,9 +77,15 @@ make install-db POSTGRES_USER=postgres POSTGRES_DB=oneshot_fantasy
 │   │   └── schema.sql        # applied by make install-db
 │   └── app/
 │       ├── main.py
-│       ├── api/             # HTTP routers, health checks
-│       ├── infrastructure/  # DB, future adapters
-│       └── domains/         # core logic (to be expanded)
+│       ├── config.py
+│       ├── api/             # HTTP layer: deps, v1 routers
+│       │   ├── deps.py
+│       │   └── v1/          # tournaments, fantasy, scoring (+ health)
+│       ├── application/     # TournamentService, FantasyService, ScoringService
+│       ├── domains/         # tournament, fantasy, scoring, ingestion (ports + entities)
+│       └── infrastructure/
+│           ├── persistence/ # ORM models + repositories
+│           └── ingestion/   # provider registry + adapters
 ```
 
 ## Health endpoint

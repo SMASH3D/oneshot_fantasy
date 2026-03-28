@@ -72,14 +72,9 @@ async def collect_health_checks() -> tuple[HealthResponse, bool]:
         async with engine.connect() as conn:
             async with conn.begin():
                 await conn.execute(
-                    text(
-                        "CREATE TEMP TABLE _oneshot_health_write_probe (v int) "
-                        "ON COMMIT DROP"
-                    )
+                    text("CREATE TEMP TABLE _oneshot_health_write_probe (v int) ON COMMIT DROP")
                 )
-                await conn.execute(
-                    text("INSERT INTO _oneshot_health_write_probe VALUES (1)")
-                )
+                await conn.execute(text("INSERT INTO _oneshot_health_write_probe VALUES (1)"))
         elapsed_ms = (time.perf_counter() - t0) * 1000
         checks["db_write"] = CheckPayload(
             status="ok",

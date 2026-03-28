@@ -18,9 +18,9 @@ Survival-style fantasy for **elimination tournaments**: users draft a pool of pl
 From the **repository root**:
 
 ```bash
-make install      # once: venv + editable install + dev tools
-cp backend/.env.example backend/.env   # then edit secrets/ports if needed
-make start        # starts Postgres, then API on http://127.0.0.1:8000 (Ctrl+C stops API only)
+cp backend/.env.example backend/.env   # first: local env for Compose + DATABASE_URL
+make install      # venv + Python deps + Docker Postgres + sql/schema.sql
+make start        # ensures Postgres, then API on http://127.0.0.1:8000 (Ctrl+C stops only Uvicorn)
 ```
 
 In another terminal:
@@ -37,7 +37,9 @@ Run **`make help`** for the canonical list. Common targets:
 
 | Target | Purpose |
 |--------|---------|
-| `make install` | Create `backend/.venv` and `pip install -e ".[dev]"` |
+| `make install` | `install-deps` + `install-db` (Python venv + schema; needs Docker) |
+| `make install-deps` | Create `backend/.venv` and `pip install -e ".[dev]"` only |
+| `make install-db` | `docker compose up -d`, wait for health, apply `backend/sql/schema.sql` |
 | `make start` | `docker compose up -d` (Postgres) + Uvicorn (foreground) |
 | `make healthcheck` | `GET /api/v1/health` (pretty-printed JSON; fails on HTTP/network errors) |
 | `make stop` | `docker compose down` (database container; volume retained) |
@@ -49,7 +51,10 @@ Override examples:
 ```bash
 make healthcheck API_URL=http://127.0.0.1:8000/api/v1/health
 make start UVICORN_PORT=8001
+make install-db POSTGRES_USER=postgres POSTGRES_DB=oneshot_fantasy
 ```
+
+`install-db` is **not** idempotent: a second run errors if tables already exist (use migrations or reset the volume when iterating).
 
 **When adding or renaming Make targets**, update the `##` descriptions next to each rule so `make help` stays accurate.
 
@@ -68,6 +73,8 @@ make start UVICORN_PORT=8001
 │   ├── .env                 # local only (see .env.example)
 │   ├── docker-compose.yml
 │   ├── pyproject.toml
+│   ├── sql/
+│   │   └── schema.sql        # applied by make install-db
 │   └── app/
 │       ├── main.py
 │       ├── api/             # HTTP routers, health checks
@@ -84,24 +91,6 @@ make start UVICORN_PORT=8001
 - **db_write** — temporary table `INSERT` with `ON COMMIT DROP` (no app tables)
 
 HTTP **503** if any check fails (useful for orchestrators).
-
-## Git
-
-This repo is intended for **personal** GitHub use. For isolating identity and remotes from work (e.g. GitLab), maintain a **local-only** `README-GIT.md` in the repo root: it is **gitignored** and holds SSH/Git identity notes for your machine.
-
-To initialize Git and publish (after configuring identity per `README-GIT.md`):
-
-```bash
-git init
-git add .
-git status
-git commit -m "Initial commit: FastAPI backend, Docker Postgres, health checks"
-git remote add origin git@github.com:SMASH3D/oneshot_fantasy.git
-git branch -M main
-git push -u origin main
-```
-
-Replace the remote URL with your real repository path if the name differs.
 
 ## License
 

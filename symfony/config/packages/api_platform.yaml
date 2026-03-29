@@ -1,0 +1,8 @@
+api_platform:
+    title: Oneshot Fantasy API
+    description: Sport-agnostic elimination fantasy (Symfony + API Platform)
+    version: 0.1.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']

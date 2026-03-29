@@ -1,43 +1,50 @@
 # Oneshot Fantasy — root Makefile
-# Run `make help` for documented targets. Keep this header and ## comments in sync when adding targets.
+# Symfony = HTTP API + UI; backend/ = Python worker (ingestion + scoring); Postgres via Docker.
+# Run `make help` for documented targets. Keep `##` descriptions in sync when adding targets.
 
-.PHONY: help install install-deps install-db start healthcheck stop db-up db-down db-logs probe-db
+.PHONY: help install install-symfony install-worker install-db start symfony-serve symfony-cc \
+	db-up db-down db-logs stop healthcheck probe-db worker-sync worker-score worker-score-batch
 
-# Paths (backend holds Python app, Docker Compose, and .env)
+# --- Paths ---
 BACKEND_DIR        := backend
+SYMFONY_DIR        := symfony
 COMPOSE_FILE       := $(BACKEND_DIR)/docker-compose.yml
 COMPOSE            := docker compose -f $(COMPOSE_FILE)
 SCHEMA_FILE        := $(BACKEND_DIR)/sql/schema.sql
 VENV               := $(BACKEND_DIR)/.venv
 PIP                := $(VENV)/bin/pip
 PY                 := $(VENV)/bin/python
-UVICORN            := $(VENV)/bin/uvicorn
 
-# Postgres inside the Compose service (override if backend/.env differs)
+# Postgres (override if backend/.env differs)
 POSTGRES_USER      ?= postgres
 POSTGRES_DB        ?= oneshot_fantasy
 
-# API (override if needed: make healthcheck API_URL=http://127.0.0.1:3000/api/v1/health)
-API_URL            ?= http://127.0.0.1:8000/api/v1/health
-UVICORN_HOST       ?= 127.0.0.1
-UVICORN_PORT       ?= 8000
+# Symfony built-in server
+SYMFONY_HOST       ?= 127.0.0.1
+SYMFONY_PORT       ?= 8080
+HEALTH_URL         ?= http://$(SYMFONY_HOST):$(SYMFONY_PORT)/health
 
 .DEFAULT_GOAL := help
 
 help: ## Show this help (default target)
-	@echo "Oneshot Fantasy — useful commands"
+	@echo "Oneshot Fantasy — Symfony + Python worker + Postgres"
 	@echo ""
-	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_.-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
-	@echo "Variables: API_URL=$(API_URL) UVICORN_PORT=$(UVICORN_PORT) (override on the command line)"
-	@echo "DB install: SCHEMA_FILE=$(SCHEMA_FILE) POSTGRES_USER=$(POSTGRES_USER) POSTGRES_DB=$(POSTGRES_DB)"
+	@echo "URLs: Symfony http://$(SYMFONY_HOST):$(SYMFONY_PORT)/  health $(HEALTH_URL)  API /api"
+	@echo "DB: SCHEMA_FILE=$(SCHEMA_FILE) POSTGRES_USER=$(POSTGRES_USER) POSTGRES_DB=$(POSTGRES_DB)"
 
-install: install-deps install-db ## Venv + Python deps, then Postgres + apply sql/schema.sql (needs Docker)
+install: install-symfony install-worker install-db ## Composer + Python venv + Postgres schema (Docker)
 
-install-deps: ## Create backend venv and pip install -e ".[dev]" only
+install-symfony: ## composer install in symfony/
+	cd $(SYMFONY_DIR) && composer install --no-interaction
+
+install-worker: ## Python venv in backend/ and pip install -e ".[dev]" (worker libs)
 	cd $(BACKEND_DIR) && python3 -m venv .venv && $(PIP) install -U pip && $(PIP) install -e ".[dev]"
 
-install-db: db-up ## Start Postgres if needed and apply SCHEMA_FILE via psql (re-run fails if tables exist)
+install-deps: install-worker ## Deprecated alias for install-worker
+
+install-db: db-up ## Apply SCHEMA_FILE via psql (re-run fails if tables already exist)
 	@test -f $(SCHEMA_FILE) || (echo "Missing $(SCHEMA_FILE)" >&2 && exit 1)
 	@echo "Waiting for Postgres ($(POSTGRES_USER) @ $(POSTGRES_DB))..."
 	@i=0; \
@@ -52,22 +59,38 @@ install-db: db-up ## Start Postgres if needed and apply SCHEMA_FILE via psql (re
 db-up: ## Start PostgreSQL (Docker) in the background
 	$(COMPOSE) up -d
 
-start: db-up ## Start Postgres, then run the API (foreground; Ctrl+C stops only Uvicorn)
-	cd $(BACKEND_DIR) && $(UVICORN) app.main:app --reload --host $(UVICORN_HOST) --port $(UVICORN_PORT)
+start: db-up symfony-serve ## Postgres + Symfony dev server (foreground; Ctrl+C stops PHP only)
 
-healthcheck: ## GET /api/v1/health (expects 200; fails on connection error or HTTP error)
-	@curl -sfS "$(API_URL)" | python3 -m json.tool
+symfony-serve: ## PHP built-in server for symfony/public (use Symfony CLI if you prefer)
+	cd $(SYMFONY_DIR) && php -S $(SYMFONY_HOST):$(SYMFONY_PORT) -t public
+
+symfony-cc: ## Symfony cache clear (dev)
+	cd $(SYMFONY_DIR) && php bin/console cache:clear
+
+healthcheck: ## GET Symfony /health (JSON liveness; start Symfony first)
+	@curl -sfS "$(HEALTH_URL)" | python3 -m json.tool
 	@echo ""
-	@echo "healthcheck: OK ($(API_URL))"
+	@echo "healthcheck: OK ($(HEALTH_URL))"
 
-stop: ## Stop and remove Postgres containers (data volume kept)
+stop: ## Stop Postgres containers (volume kept)
 	$(COMPOSE) down
 
-db-down: ## Alias for stop
-	$(COMPOSE) down
+db-down: stop ## Alias for stop
 
 db-logs: ## Follow Postgres container logs
 	$(COMPOSE) logs -f db
 
-probe-db: ## Python-only DB smoke test (no HTTP server required)
+probe-db: ## Python SELECT 1 against DATABASE_URL (no HTTP)
 	cd $(BACKEND_DIR) && $(PY) -m app.infrastructure.db_connectivity
+
+worker-sync: ## Ingest stat_events (set TOURNAMENT_ID=uuid; loads backend/.env)
+	@test -n "$(TOURNAMENT_ID)" || (echo "Set TOURNAMENT_ID to a tournament UUID" >&2; exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) -m scripts.sync_data --tournament-id "$(TOURNAMENT_ID)" )
+
+worker-score: ## Recompute round_scores (set LEAGUE_ID= FANTASY_ROUND_ID=; loads backend/.env)
+	@test -n "$(LEAGUE_ID)" && test -n "$(FANTASY_ROUND_ID)" || (echo "Set LEAGUE_ID and FANTASY_ROUND_ID" >&2; exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) -m scripts.compute_scores --league-id "$(LEAGUE_ID)" --fantasy-round-id "$(FANTASY_ROUND_ID)" )
+
+worker-score-batch: ## Batch scoring (set SCORE_JOBS_FILE=path; loads backend/.env)
+	@test -n "$(SCORE_JOBS_FILE)" || (echo "Set SCORE_JOBS_FILE to a jobs file path" >&2; exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) -m scripts.score_batch --jobs-file "$(SCORE_JOBS_FILE)" --continue-on-error )

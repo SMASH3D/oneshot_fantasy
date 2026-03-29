@@ -11,7 +11,6 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/oneshot_fantasy"
-    api_v1_prefix: str = "/api/v1"
 
 
 @lru_cache

@@ -56,6 +56,15 @@ class ScoringService:
             tournament_id=league.tournament_id,
             fantasy_round_id=fantasy_round_id,
         )
+        roster = await self._fantasy.list_draft_roster_participant_ids(
+            league_id,
+            league_membership_id,
+        )
+        if roster:
+            stat_rows = [r for r in stat_rows if r.get("participant_id") in roster]
+        else:
+            stat_rows = []
+
         total, breakdown = calculator.compute(
             league_id=league_id,
             fantasy_round_id=fantasy_round_id,

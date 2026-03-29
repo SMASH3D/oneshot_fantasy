@@ -41,3 +41,18 @@ class Participant:
     display_name: str
     kind: str | None
     meta: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class MatchSlotRef:
+    slot_index: int
+    participant_id: UUID | None
+
+
+@dataclass(frozen=True, slots=True)
+class Match:
+    id: UUID
+    tournament_round_id: UUID
+    scheduled_at: datetime | None
+    status: str
+    slots: tuple[MatchSlotRef, ...]

@@ -315,7 +315,7 @@ CREATE TABLE round_scores (
     id                      uuid PRIMARY KEY DEFAULT gen_random_uuid (),
     fantasy_round_id        uuid NOT NULL REFERENCES fantasy_rounds (id) ON DELETE CASCADE,
     league_membership_id    uuid NOT NULL REFERENCES league_memberships (id) ON DELETE CASCADE,
-    points                  numeric NOT NULL DEFAULT 0,
+    points                  numeric(14, 4) NOT NULL DEFAULT 0,
     breakdown               jsonb NOT NULL DEFAULT '{}'::jsonb,
     computed_at             timestamptz NOT NULL DEFAULT now (),
     CONSTRAINT uq_round_scores UNIQUE (fantasy_round_id, league_membership_id)

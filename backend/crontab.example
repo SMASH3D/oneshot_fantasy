@@ -1,0 +1,11 @@
+# Example crontab fragments for the Python worker (copy/adapt; do not commit secrets).
+# See docs/worker-automation.md for full notes.
+#
+# SHELL=/bin/bash
+# PATH=/usr/local/bin:/usr/bin:/bin
+#
+# # Ingest stats (replace TOURNAMENT_UUID and path to repo)
+# 10 * * * * deploy flock -n /tmp/oneshot-sync.lock bash -c 'cd /srv/oneshot_fantasy/backend && . .venv/bin/activate && set -a && [ -f .env ] && . ./.env && set +a && python -m scripts.sync_data --tournament-id TOURNAMENT_UUID' >>/var/log/oneshot/sync.log 2>&1
+#
+# # Batch scoring from jobs file
+# 25 * * * * deploy flock -n /tmp/oneshot-score.lock bash -c 'cd /srv/oneshot_fantasy/backend && . .venv/bin/activate && set -a && [ -f .env ] && . ./.env && set +a && python -m scripts.score_batch --jobs-file /etc/oneshot/score-jobs.txt --continue-on-error' >>/var/log/oneshot/score.log 2>&1

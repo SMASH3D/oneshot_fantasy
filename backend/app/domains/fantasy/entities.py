@@ -25,3 +25,12 @@ class LeagueMembership:
     user_id: UUID
     nickname: str | None
     role: str
+
+
+@dataclass(frozen=True, slots=True)
+class LeagueSummary:
+    id: UUID
+    tournament_id: UUID
+    name: str
+    status: str
+    member_count: int

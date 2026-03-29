@@ -1,5 +1,6 @@
-"""SQLAlchemy implementation of IScoringRepository (+ IStatQuery stub)."""
+"""SQLAlchemy implementation of IScoringRepository and IStatQuery."""
 
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -9,8 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.scoring import rules as sr
 from app.domains.scoring.ports import IScoringRepository, IStatQuery
+from app.infrastructure.persistence.models.fantasy import FantasyRound as FantasyRoundRow
 from app.infrastructure.persistence.models.fantasy import RoundScore as RoundScoreRow
 from app.infrastructure.persistence.models.fantasy import ScoringRuleSet as ScoringRuleSetRow
+from app.infrastructure.persistence.models.stat_event import StatEvent as StatEventRow
 
 
 class ScoringRepository(IScoringRepository, IStatQuery):
@@ -43,9 +46,11 @@ class ScoringRepository(IScoringRepository, IStatQuery):
         )
         existing = (await self._session.scalars(stmt)).one_or_none()
         dec = Decimal(str(points))
+        now = datetime.now(UTC)
         if existing:
             existing.points = dec
             existing.breakdown = breakdown
+            existing.computed_at = now
         else:
             self._session.add(
                 RoundScoreRow(
@@ -53,6 +58,7 @@ class ScoringRepository(IScoringRepository, IStatQuery):
                     league_membership_id=league_membership_id,
                     points=dec,
                     breakdown=breakdown,
+                    computed_at=now,
                 )
             )
         await self._session.flush()
@@ -63,9 +69,31 @@ class ScoringRepository(IScoringRepository, IStatQuery):
         tournament_id: UUID,
         fantasy_round_id: UUID,
     ) -> list[dict[str, Any]]:
-        """Placeholder until lineup joins and metric selection are implemented."""
-        del tournament_id, fantasy_round_id
-        return []
+        fr = await self._session.get(FantasyRoundRow, fantasy_round_id)
+        if fr is None:
+            return []
+
+        stmt = select(StatEventRow).where(StatEventRow.tournament_id == tournament_id)
+        if fr.tournament_round_id is not None:
+            stmt = stmt.where(StatEventRow.tournament_round_id == fr.tournament_round_id)
+        stmt = stmt.order_by(StatEventRow.occurred_at, StatEventRow.id)
+        rows = (await self._session.scalars(stmt)).all()
+        return [_stat_event_row_to_dict(r) for r in rows]
+
+
+def _stat_event_row_to_dict(row: StatEventRow) -> dict[str, Any]:
+    return {
+        "id": row.id,
+        "tournament_id": row.tournament_id,
+        "participant_id": row.participant_id,
+        "match_id": row.match_id,
+        "tournament_round_id": row.tournament_round_id,
+        "metric_key": row.metric_key,
+        "value_numeric": float(row.value_numeric),
+        "occurred_at": row.occurred_at,
+        "details": dict(row.details or {}),
+        "source": row.source,
+    }
 
 
 def _rule_set_from_row(row: ScoringRuleSetRow) -> sr.ScoringRuleSet:

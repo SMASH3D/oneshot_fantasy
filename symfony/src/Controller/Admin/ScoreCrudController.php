@@ -15,6 +15,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for Score records.
+ */
 class ScoreCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

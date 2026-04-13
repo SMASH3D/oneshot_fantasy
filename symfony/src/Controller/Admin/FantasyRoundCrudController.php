@@ -14,6 +14,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for FantasyRound records.
+ */
 class FantasyRoundCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

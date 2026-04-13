@@ -18,6 +18,9 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+/**
+ * Doctrine ORM Entity strictly defining the League structural schema and database relationships.
+ */
 #[ApiResource(
     operations: [
         new GetCollection(),

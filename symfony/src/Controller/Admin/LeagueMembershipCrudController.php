@@ -11,6 +11,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for LeagueMembership records.
+ */
 class LeagueMembershipCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

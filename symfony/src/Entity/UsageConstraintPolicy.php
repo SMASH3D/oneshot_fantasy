@@ -8,6 +8,9 @@ use App\Entity\Traits\EntityIdTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Doctrine ORM Entity strictly defining the UsageConstraintPolicy structural schema and database relationships.
+ */
 #[ORM\Entity]
 #[ORM\Table(name: 'usage_constraint_policies')]
 #[ORM\HasLifecycleCallbacks]

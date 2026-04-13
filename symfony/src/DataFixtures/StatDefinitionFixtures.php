@@ -9,6 +9,9 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
+/**
+ * Main organizational Doctrine fixture handling core or baseline system bootstrapping for StatDefinitionFixtures.
+ */
 class StatDefinitionFixtures extends Fixture implements FixtureGroupInterface
 {
     public static function getGroups(): array

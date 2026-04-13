@@ -9,6 +9,9 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
+/**
+ * Doctrine automation fixture populating dummy/developer User resources during dev environment boots.
+ */
 final class UserFixture extends Fixture implements FixtureGroupInterface
 {
     public function load(ObjectManager $manager): void

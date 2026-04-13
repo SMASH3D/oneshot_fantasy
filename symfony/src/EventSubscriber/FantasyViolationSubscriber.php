@@ -10,6 +10,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
+/**
+ * Event subscriber observing and mapping FantasyViolation exceptions into user-friendly API responses.
+ */
 final class FantasyViolationSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents(): array

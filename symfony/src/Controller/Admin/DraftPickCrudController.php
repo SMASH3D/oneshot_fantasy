@@ -13,6 +13,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for DraftPick records.
+ */
 class DraftPickCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

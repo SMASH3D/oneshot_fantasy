@@ -13,6 +13,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for Lineup records.
+ */
 class LineupCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

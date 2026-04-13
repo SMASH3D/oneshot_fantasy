@@ -11,6 +11,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/**
+ * EasyAdmin remote controller providing full CRUD management UI for User records.
+ */
 class UserCrudController extends AbstractCrudController
 {
     public static function getEntityFqcn(): string

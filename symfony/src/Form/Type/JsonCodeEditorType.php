@@ -10,6 +10,9 @@ use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\FormBuilderInterface;
 
+/**
+ * Custom Symfony Form Type utilizing a generic JSON string transformer for CodeEditor integration.
+ */
 class JsonCodeEditorType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

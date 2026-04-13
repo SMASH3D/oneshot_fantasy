@@ -4,12 +4,32 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    denormalizationContext: ['groups' => ['write']],
+    order: ['name' => 'ASC'],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['tournament' => 'exact', 'status' => 'exact'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'fantasy_leagues')]
 #[ORM\HasLifecycleCallbacks]
@@ -21,30 +41,38 @@ class League
 
     #[ORM\ManyToOne(targetEntity: Tournament::class, inversedBy: 'leagues')]
     #[ORM\JoinColumn(name: 'tournament_id', referencedColumnName: 'id', nullable: false, onDelete: 'RESTRICT')]
+    #[Groups(['read', 'write'])]
     private ?Tournament $tournament = null;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['read', 'write'])]
     private string $name = '';
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'commissionedLeagues')]
     #[ORM\JoinColumn(name: 'commissioner_user_id', referencedColumnName: 'id', nullable: false, onDelete: 'RESTRICT')]
+    #[Groups(['read', 'write'])]
     private ?User $commissioner = null;
 
     #[ORM\Column(type: Types::STRING, options: ['default' => 'forming'])]
+    #[Groups(['read', 'write'])]
     private string $status = 'forming';
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    #[Groups(['read', 'write'])]
     private array $settings = [];
 
     /** @var list<array<string, mixed>> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    #[Groups(['read', 'write'])]
     private array $lineupTemplate = [];
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $updatedAt;
 
     /** @var Collection<int, LeagueMembership> */
@@ -64,6 +92,11 @@ class League
         $this->updatedAt = $this->createdAt;
         $this->memberships = new ArrayCollection();
         $this->fantasyRounds = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?: 'League';
     }
 
     public function getTournament(): ?Tournament
@@ -165,37 +198,10 @@ class League
         return $this->memberships;
     }
 
-    public function addMembership(LeagueMembership $membership): static
-    {
-        if (!$this->memberships->contains($membership)) {
-            $this->memberships->add($membership);
-            $membership->setLeague($this);
-        }
-
-        return $this;
-    }
-
-    public function removeMembership(LeagueMembership $membership): static
-    {
-        $this->memberships->removeElement($membership);
-
-        return $this;
-    }
-
     /** @return Collection<int, FantasyRound> */
     public function getFantasyRounds(): Collection
     {
         return $this->fantasyRounds;
-    }
-
-    public function addFantasyRound(FantasyRound $fantasyRound): static
-    {
-        if (!$this->fantasyRounds->contains($fantasyRound)) {
-            $this->fantasyRounds->add($fantasyRound);
-            $fantasyRound->setLeague($this);
-        }
-
-        return $this;
     }
 
     public function getDraftSession(): ?DraftSession
@@ -205,18 +211,7 @@ class League
 
     public function setDraftSession(?DraftSession $draftSession): static
     {
-        if ($draftSession === null) {
-            if ($this->draftSession !== null) {
-                $this->draftSession->setLeague(null);
-            }
-            $this->draftSession = null;
-        } else {
-            if ($this->draftSession !== null && $this->draftSession !== $draftSession) {
-                $this->draftSession->setLeague(null);
-            }
-            $this->draftSession = $draftSession;
-            $draftSession->setLeague($this);
-        }
+        $this->draftSession = $draftSession;
 
         return $this;
     }

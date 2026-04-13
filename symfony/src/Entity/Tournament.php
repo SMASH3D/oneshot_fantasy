@@ -4,12 +4,32 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    denormalizationContext: ['groups' => ['write']],
+    order: ['startsAt' => 'ASC', 'name' => 'ASC'],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['sportKey' => 'exact', 'status' => 'exact'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'tournaments')]
 #[ORM\HasLifecycleCallbacks]
@@ -21,49 +41,57 @@ class Tournament
     use EntityIdTrait;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['read', 'write'])]
     private string $name = '';
 
     #[ORM\Column(type: Types::STRING, unique: true, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?string $slug = null;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['read', 'write'])]
     private string $sportKey = '';
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?string $statsAdapterKey = null;
 
     #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?string $defaultScoringEngineKey = null;
 
     #[ORM\Column(type: Types::STRING, options: ['default' => 'UTC'])]
+    #[Groups(['read', 'write'])]
     private string $timezone = 'UTC';
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?\DateTimeImmutable $startsAt = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?\DateTimeImmutable $endsAt = null;
 
     #[ORM\Column(type: Types::STRING, options: ['default' => 'draft'])]
+    #[Groups(['read', 'write'])]
     private string $status = 'draft';
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    #[Groups(['read', 'write'])]
     private array $metadata = [];
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $updatedAt;
 
     /** @var Collection<int, Round> */
     #[ORM\OneToMany(targetEntity: Round::class, mappedBy: 'tournament', cascade: ['persist'], orphanRemoval: true)]
     private Collection $rounds;
-
-    /** @var Collection<int, Participant> */
-    #[ORM\OneToMany(targetEntity: Participant::class, mappedBy: 'tournament', cascade: ['persist'], orphanRemoval: true)]
-    private Collection $participants;
 
     /** @var Collection<int, League> */
     #[ORM\OneToMany(targetEntity: League::class, mappedBy: 'tournament')]
@@ -74,8 +102,12 @@ class Tournament
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
         $this->rounds = new ArrayCollection();
-        $this->participants = new ArrayCollection();
         $this->leagues = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?: '';
     }
 
     public function getName(): string
@@ -228,22 +260,6 @@ class Tournament
         if (!$this->rounds->contains($round)) {
             $this->rounds->add($round);
             $round->setTournament($this);
-        }
-
-        return $this;
-    }
-
-    /** @return Collection<int, Participant> */
-    public function getParticipants(): Collection
-    {
-        return $this->participants;
-    }
-
-    public function addParticipant(Participant $participant): static
-    {
-        if (!$this->participants->contains($participant)) {
-            $this->participants->add($participant);
-            $participant->setTournament($this);
         }
 
         return $this;

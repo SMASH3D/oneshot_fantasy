@@ -1,0 +1,42 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block page_title %}Oneshot Fantasy — Admin{% endblock %}
+
+{% block main %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">Welcome to Oneshot Fantasy Admin</h1>
+        <p class="text-muted">Manage tournaments, leagues, participants and draft sessions from the sidebar.</p>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa fa-book me-2"></i>API Documentation</h5>
+                <p class="card-text text-muted small">Explore and test the REST API with the interactive OpenAPI UI.</p>
+                <a href="/api/docs" class="btn btn-sm btn-outline-primary" target="_blank">Open API Docs</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa fa-trophy me-2"></i>Tournaments</h5>
+                <p class="card-text text-muted small">Create tournaments, add bracket rounds, and link participants.</p>
+                <a href="{{ ea_url().setController('App\\Controller\\Admin\\TournamentCrudController') }}" class="btn btn-sm btn-outline-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa fa-users me-2"></i>Participants</h5>
+                <p class="card-text text-muted small">View the NBA roster imported by the Python ingestion pipeline.</p>
+                <a href="{{ ea_url().setController('App\\Controller\\Admin\\ParticipantCrudController') }}" class="btn btn-sm btn-outline-primary">Browse</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

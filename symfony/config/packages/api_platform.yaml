@@ -1,8 +1,26 @@
 api_platform:
     title: Oneshot Fantasy API
-    description: Sport-agnostic elimination fantasy (Symfony + API Platform)
-    version: 0.1.0
+    description: Sport-agnostic elimination fantasy — Symfony + API Platform
+    version: 1.0.0
+
     defaults:
         stateless: true
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
+        pagination_enabled: true
+        pagination_items_per_page: 50
+        pagination_maximum_items_per_page: 500
+
+    formats:
+        jsonld: ['application/ld+json']
+        json:   ['application/json']
+        html:   ['text/html']
+
+    error_formats:
+        jsonld: ['application/ld+json']
+        json:   ['application/json']
+
+    # Expose all resource IDs as UUIDs (not integers)
+    # API Platform detects Symfony UID automatically
+
+    # Keep /api as the prefix (set in routes/api_platform.yaml)

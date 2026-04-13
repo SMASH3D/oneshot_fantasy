@@ -1,0 +1,237 @@
+/* Minimal UI shell for Twig + vanilla JS demos */
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --text: #e7ecf3;
+  --muted: #8b9cb3;
+  --accent: #5b9fd4;
+  --danger: #e06c75;
+  --ok: #89ca78;
+  --border: #2d3a4d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+.ui-container {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.ui-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ui-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.ui-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-left: auto;
+}
+
+.ui-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.ui-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.ui-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  background: #243044;
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ui-btn:hover {
+  background: #2c3a52;
+}
+
+.ui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-btn--primary {
+  background: var(--accent);
+  border-color: #4a8ec2;
+  color: #0a0f14;
+}
+
+.ui-btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.ui-btn--ghost:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ui-btn--danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.ui-form-row {
+  margin-bottom: 0.75rem;
+}
+
+.ui-form-row label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+select.ui-input,
+input.ui-input {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.ui-table-wrap {
+  overflow-x: auto;
+}
+
+table.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+table.ui-table th,
+table.ui-table td {
+  text-align: left;
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+table.ui-table th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ui-flash {
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.35rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.ui-flash--error {
+  background: rgba(224, 108, 117, 0.12);
+  border: 1px solid var(--danger);
+  color: #f5b5bb;
+}
+
+.ui-flash--ok {
+  background: rgba(137, 202, 120, 0.1);
+  border: 1px solid var(--ok);
+  color: #b8e6ae;
+}
+
+.ui-muted {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.ui-poll-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: ui-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes ui-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.ui-draft-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 0.35rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ui-draft-banner--your-turn {
+  border-color: var(--ok);
+  background: rgba(137, 202, 120, 0.08);
+}
+
+.ui-draft-banner--wait {
+  border-color: var(--border);
+  color: var(--muted);
+}

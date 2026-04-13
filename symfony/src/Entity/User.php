@@ -4,12 +4,29 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    denormalizationContext: ['groups' => ['write']],
+    order: ['displayName' => 'ASC'],
+)]
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
 #[ORM\HasLifecycleCallbacks]
@@ -19,15 +36,19 @@ class User
     use EntityIdTrait;
 
     #[ORM\Column(type: Types::STRING, unique: true, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['read', 'write'])]
     private string $displayName = '';
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $updatedAt;
 
     /** @var Collection<int, League> */
@@ -44,6 +65,11 @@ class User
         $this->updatedAt = $this->createdAt;
         $this->commissionedLeagues = new ArrayCollection();
         $this->leagueMemberships = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->displayName ?: ($this->email ?: '');
     }
 
     public function getEmail(): ?string

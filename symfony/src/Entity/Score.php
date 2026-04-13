@@ -4,13 +4,28 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
  * Aggregated fantasy points for one membership in one fantasy round (maps to round_scores).
  */
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    order: ['points' => 'DESC'],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['fantasyRound' => 'exact', 'leagueMembership' => 'exact'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'round_scores')]
 #[ORM\UniqueConstraint(name: 'uq_round_scores', columns: ['fantasy_round_id', 'league_membership_id'])]
@@ -23,25 +38,35 @@ class Score
 
     #[ORM\ManyToOne(targetEntity: FantasyRound::class, inversedBy: 'scores')]
     #[ORM\JoinColumn(name: 'fantasy_round_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['read'])]
     private ?FantasyRound $fantasyRound = null;
 
     #[ORM\ManyToOne(targetEntity: LeagueMembership::class, inversedBy: 'scores')]
     #[ORM\JoinColumn(name: 'league_membership_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['read'])]
     private ?LeagueMembership $leagueMembership = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 14, scale: 4)]
+    #[Groups(['read'])]
     private string $points = '0.0000';
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    #[Groups(['read'])]
     private array $breakdown = [];
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $computedAt;
 
     public function __construct()
     {
         $this->computedAt = new \DateTimeImmutable();
+    }
+
+    public function __toString(): string
+    {
+        return 'Score' . ($this->leagueMembership ? ' - ' . ((string) $this->leagueMembership) : '');
     }
 
     public function getFantasyRound(): ?FantasyRound

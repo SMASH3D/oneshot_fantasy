@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controller\Admin;
+
+use App\Entity\Score;
+use App\Form\Type\JsonCodeEditorType;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
+
+class ScoreCrudController extends AbstractCrudController
+{
+    public static function getEntityFqcn(): string
+    {
+        return Score::class;
+    }
+
+    public function configureActions(Actions $actions): Actions
+    {
+        return $actions->disable(Action::NEW, Action::EDIT, Action::DELETE);
+    }
+
+    public function configureFields(string $pageName): iterable
+    {
+        yield IdField::new('id')->hideOnForm();
+        yield AssociationField::new('fantasyRound', 'Round');
+        yield AssociationField::new('leagueMembership', 'Member');
+        yield NumberField::new('points');
+        yield CodeEditorField::new('breakdown')
+            ->setFormType(JsonCodeEditorType::class)
+            ->hideOnIndex();
+        yield DateTimeField::new('computedAt')->hideOnForm();
+    }
+}

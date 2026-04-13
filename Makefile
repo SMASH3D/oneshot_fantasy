@@ -3,7 +3,8 @@
 # Run `make help` for documented targets. Keep `##` descriptions in sync when adding targets.
 
 .PHONY: help install install-symfony install-worker install-db start symfony-serve symfony-cc \
-	db-up db-down db-logs stop healthcheck probe-db worker-sync worker-score worker-score-batch
+	db-up db-down db-logs stop healthcheck probe-db worker-sync worker-score worker-score-batch \
+	ingest-nba
 
 # --- Paths ---
 BACKEND_DIR        := backend
@@ -94,3 +95,6 @@ worker-score: ## Recompute round_scores (set LEAGUE_ID= FANTASY_ROUND_ID=; loads
 worker-score-batch: ## Batch scoring (set SCORE_JOBS_FILE=path; loads backend/.env)
 	@test -n "$(SCORE_JOBS_FILE)" || (echo "Set SCORE_JOBS_FILE to a jobs file path" >&2; exit 1)
 	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) -m scripts.score_batch --jobs-file "$(SCORE_JOBS_FILE)" --continue-on-error )
+
+ingest-nba: ## Import current NBA roster into participants table (loads backend/.env)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) scripts/import_nba_players.py )

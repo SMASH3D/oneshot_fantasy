@@ -2,13 +2,23 @@
 
 {% block title %}{{ title }}{% endblock %}
 
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/ui.css') }}">
+{% endblock %}
+
 {% block body %}
-    <main class="container py-5">
-        <h1 class="mb-3">{{ title }}</h1>
-        <p class="lead">Symfony backend (API Platform + Twig).</p>
+    <main class="ui-container">
+        <h1>{{ title }}</h1>
+        <p class="ui-muted">Symfony (Twig UI + JSON API under <code>/api/v1</code>).</p>
         <ul>
-            <li><a href="/api">API documentation entry</a></li>
-            <li><a href="/api/docs">OpenAPI (Swagger UI)</a></li>
+            <li><a href="{{ path('api_doc') }}">OpenAPI (Swagger UI)</a></li>
+            <li><a href="/api">API Platform entry</a></li>
         </ul>
+        <div class="ui-card" style="margin-top:1.5rem;">
+            <h2>Twig + JS demo</h2>
+            <p class="ui-muted">Replace <code>&lt;league-uuid&gt;</code> and optionally pass <code>membership</code> for draft/lineup.</p>
+            <p><code>/ui/leagues/&lt;league-uuid&gt;?membership=&lt;membership-uuid&gt;</code></p>
+            <p><a class="ui-btn ui-btn--primary" href="https://symfony.com/doc/current/templates.html">Twig docs</a></p>
+        </div>
     </main>
 {% endblock %}

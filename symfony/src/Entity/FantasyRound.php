@@ -4,15 +4,37 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
  * Fantasy scoring period for a league (maps to fantasy_rounds).
  */
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(),
+        new Patch(),
+        new Delete(),
+    ],
+    normalizationContext: ['groups' => ['read']],
+    denormalizationContext: ['groups' => ['write']],
+    order: ['orderIndex' => 'ASC'],
+)]
+#[ApiFilter(SearchFilter::class, properties: ['league' => 'exact', 'tournamentRound' => 'exact'])]
 #[ORM\Entity]
 #[ORM\Table(name: 'fantasy_rounds')]
 #[ORM\UniqueConstraint(name: 'uq_fantasy_rounds_league_order', columns: ['league_id', 'order_index'])]
@@ -26,32 +48,41 @@ class FantasyRound
 
     #[ORM\ManyToOne(targetEntity: League::class, inversedBy: 'fantasyRounds')]
     #[ORM\JoinColumn(name: 'league_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['read', 'write'])]
     private ?League $league = null;
 
     #[ORM\ManyToOne(targetEntity: Round::class, inversedBy: 'fantasyRounds')]
     #[ORM\JoinColumn(name: 'tournament_round_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['read', 'write'])]
     private ?Round $tournamentRound = null;
 
     #[ORM\Column(type: Types::INTEGER)]
+    #[Groups(['read', 'write'])]
     private int $orderIndex = 0;
 
     #[ORM\Column(type: Types::STRING)]
+    #[Groups(['read', 'write'])]
     private string $name = '';
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?\DateTimeImmutable $opensAt = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE, nullable: true)]
+    #[Groups(['read', 'write'])]
     private ?\DateTimeImmutable $locksAt = null;
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    #[Groups(['read', 'write'])]
     private array $metadata = [];
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
+    #[Groups(['read'])]
     private \DateTimeImmutable $updatedAt;
 
     /** @var Collection<int, Lineup> */
@@ -68,6 +99,11 @@ class FantasyRound
         $this->updatedAt = $this->createdAt;
         $this->lineups = new ArrayCollection();
         $this->scores = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name ?: 'Fantasy Round';
     }
 
     public function getLeague(): ?League

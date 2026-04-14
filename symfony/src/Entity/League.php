@@ -70,6 +70,39 @@ class League
     #[Groups(['read', 'write'])]
     private array $lineupTemplate = [];
 
+    /** @var array<string, mixed> */
+    #[ORM\Column(type: Types::JSON)]
+    #[Groups(['read', 'write'])]
+    private array $scoringConfig = [
+        'points' => 1,
+        'assists' => 1.5,
+        'rebounds' => 1.2,
+        'blocks' => 3,
+        'steals' => 3,
+        'turnovers' => -1.5,
+        'performance_bonuses' => [
+            'double_double' => 3,
+            'triple_double' => 5,
+            'quadruple_double' => 8,
+            'quintuple_double' => 12,
+            'five_by_five' => 6,
+        ],
+        'efficiency' => [
+            'fg_pct_bonus' => [
+                'threshold' => 0.5,
+                'value' => 3,
+            ],
+            'three_pt_pct_bonus' => [
+                'threshold' => 0.38,
+                'value' => 3,
+            ],
+            'ft_pct_bonus' => [
+                'threshold' => 0.85,
+                'value' => 2,
+            ],
+        ],
+    ];
+
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     #[Groups(['read'])]
     private \DateTimeImmutable $createdAt;
@@ -174,6 +207,20 @@ class League
     public function setLineupTemplate(array $lineupTemplate): static
     {
         $this->lineupTemplate = $lineupTemplate;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed> */
+    public function getScoringConfig(): array
+    {
+        return $this->scoringConfig;
+    }
+
+    /** @param array<string, mixed> $scoringConfig */
+    public function setScoringConfig(array $scoringConfig): static
+    {
+        $this->scoringConfig = $scoringConfig;
 
         return $this;
     }

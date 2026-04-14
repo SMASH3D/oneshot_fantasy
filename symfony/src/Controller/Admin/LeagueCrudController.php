@@ -39,6 +39,9 @@ class LeagueCrudController extends AbstractCrudController
         yield CodeEditorField::new('settings')
             ->setFormType(JsonCodeEditorType::class)
             ->hideOnIndex();
+        yield CodeEditorField::new('scoringConfig', 'Scoring settings')
+            ->setFormType(JsonCodeEditorType::class)
+            ->hideOnIndex();
         yield CodeEditorField::new('lineupTemplate', 'Lineup Template')
             ->setFormType(JsonCodeEditorType::class)
             ->hideOnIndex();

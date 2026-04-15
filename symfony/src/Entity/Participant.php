@@ -94,11 +94,16 @@ class Participant
     #[ORM\OneToMany(targetEntity: ParticipantStat::class, mappedBy: 'participant', cascade: ['persist'], orphanRemoval: true)]
     private Collection $stats;
 
+    /** @var Collection<int, ParticipantAggregatedScore> */
+    #[ORM\OneToMany(targetEntity: ParticipantAggregatedScore::class, mappedBy: 'participant', cascade: ['persist'], orphanRemoval: true)]
+    private Collection $aggregatedScores;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
         $this->stats = new ArrayCollection();
+        $this->aggregatedScores = new ArrayCollection();
     }
 
     public function __toString(): string
@@ -237,5 +242,11 @@ class Participant
         $this->injuryStatus = $injuryStatus;
 
         return $this;
+    }
+
+    /** @return Collection<int, ParticipantAggregatedScore> */
+    public function getAggregatedScores(): Collection
+    {
+        return $this->aggregatedScores;
     }
 }

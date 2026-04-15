@@ -142,5 +142,44 @@ class GameStatsImporter:
                     _LOG.info("Upserted %d participant game scores for drafted leagues.", len(score_upsert_rows))
                 else:
                     _LOG.info("No player instances found in any drafted league for scoring.")
+
+                # Append Clifford Benchman baseline logic for game stats
+                cur.execute("SELECT id FROM participants WHERE external_id = 'clifford_benchman'")
+                row = cur.fetchone()
+                if not row:
+                    cur.execute(
+                        """
+                        INSERT INTO participants (id, name, sport, external_id, type, injury_status, metadata, created_at, updated_at)
+                        VALUES (gen_random_uuid(), 'Clifford Benchman', %s, 'clifford_benchman', 'player', 'ACTIVE', '{}'::jsonb, NOW(), NOW())
+                        RETURNING id
+                        """,
+                        (self._sport,)
+                    )
+                    clifford_id = cur.fetchone()[0]
+                else:
+                    clifford_id = row[0]
+
+                cur.execute(
+                    """
+                    INSERT INTO participant_game_stats (id, participant_id, game_id, stat_definition_id, value, created_at, updated_at)
+                    SELECT 
+                        gen_random_uuid(),
+                        %s,
+                        game_id,
+                        stat_definition_id,
+                        AVG(value),
+                        NOW(),
+                        NOW()
+                    FROM participant_game_stats
+                    WHERE participant_id != %s
+                    GROUP BY game_id, stat_definition_id
+                    ON CONFLICT (participant_id, game_id, stat_definition_id) DO UPDATE SET
+                        value = EXCLUDED.value,
+                        updated_at = NOW()
+                    """,
+                    (str(clifford_id), str(clifford_id))
+                )
+
+                _LOG.info("Clifford Benchman baseline averaged effectively across participant game stats.")
                 
                 return GameStatImportSummary(inserted=inserted, updated=updated, total=len(raw_stats))

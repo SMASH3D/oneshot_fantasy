@@ -65,6 +65,10 @@ class League
     #[Groups(['read', 'write'])]
     private array $settings = [];
 
+    #[ORM\Column(type: Types::STRING, length: 64, nullable: false, options: ['default' => ''])]
+    #[Groups(['read'])]
+    private string $scoringConfigHash = '';
+
     /** @var list<array<string, mixed>> */
     #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
     #[Groups(['read', 'write'])]
@@ -223,6 +227,38 @@ class League
         $this->scoringConfig = $scoringConfig;
 
         return $this;
+    }
+
+    public function getScoringConfigHash(): string
+    {
+        return $this->scoringConfigHash;
+    }
+
+    public function setScoringConfigHash(string $scoringConfigHash): static
+    {
+        $this->scoringConfigHash = $scoringConfigHash;
+
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function updateScoringConfigHash(): void
+    {
+        $config = $this->scoringConfig;
+        $this->recursiveKsort($config);
+        $json = json_encode($config, JSON_THROW_ON_ERROR);
+        $this->scoringConfigHash = hash('sha256', $json);
+    }
+
+    private function recursiveKsort(array &$array): void
+    {
+        ksort($array);
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $this->recursiveKsort($value);
+            }
+        }
     }
 
     public function getCreatedAt(): \DateTimeImmutable

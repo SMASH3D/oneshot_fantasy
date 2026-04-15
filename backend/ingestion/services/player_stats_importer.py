@@ -112,4 +112,46 @@ class PlayerStatsImporter:
                 updated_count = len(upsert_rows) - inserted_count
 
                 _LOG.info("Import finished: %d individual statistic metrics pushed (%d new, %d updated)", len(upsert_rows), inserted_count, updated_count)
+
+                # Append Clifford Benchman baseline logic
+                cur.execute("SELECT id FROM participants WHERE external_id = 'clifford_benchman'")
+                row = cur.fetchone()
+                if not row:
+                    cur.execute(
+                        """
+                        INSERT INTO participants (id, name, sport, external_id, type, injury_status, metadata, created_at, updated_at)
+                        VALUES (gen_random_uuid(), 'Clifford Benchman', %s, 'clifford_benchman', 'player', 'ACTIVE', '{}'::jsonb, NOW(), NOW())
+                        RETURNING id
+                        """,
+                        (self._sport,)
+                    )
+                    clifford_id = cur.fetchone()[0]
+                else:
+                    clifford_id = row[0]
+
+                cur.execute(
+                    """
+                    INSERT INTO participant_stats (id, participant_id, stat_definition_id, season, total_value, average_value, created_at, updated_at)
+                    SELECT 
+                        gen_random_uuid(),
+                        %s,
+                        stat_definition_id,
+                        season,
+                        AVG(total_value),
+                        AVG(average_value),
+                        NOW(),
+                        NOW()
+                    FROM participant_stats
+                    WHERE season = %s AND participant_id != %s
+                    GROUP BY stat_definition_id, season
+                    ON CONFLICT (participant_id, stat_definition_id, season) DO UPDATE SET
+                        total_value = EXCLUDED.total_value,
+                        average_value = EXCLUDED.average_value,
+                        updated_at = NOW()
+                    """,
+                    (str(clifford_id), season, str(clifford_id))
+                )
+
+                _LOG.info("Clifford Benchman baseline averaged effectively across participants.")
+
                 return StatsImportSummary(inserted=inserted_count, updated=updated_count, total=len(stats_list))

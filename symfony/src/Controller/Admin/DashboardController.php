@@ -44,6 +44,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(LeagueMembershipCrudController::class, 'Memberships', 'fa fa-user-plus');
         yield MenuItem::linkTo(FantasyRoundCrudController::class, 'Fantasy Rounds', 'fa fa-calendar');
         yield MenuItem::linkTo(LineupCrudController::class, 'Lineups', 'fa fa-list');
+        yield MenuItem::linkTo(ScoringConfigPresetCrudController::class, 'Scoring Presets', 'fa fa-cogs');
         yield MenuItem::linkTo(ScoreCrudController::class, 'Scores', 'fa fa-star');
         yield MenuItem::section('Draft');
         yield MenuItem::linkTo(DraftSessionCrudController::class, 'Draft Sessions', 'fa fa-clock');

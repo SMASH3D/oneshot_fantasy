@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+cd ..cd#!/usr/bin/env python3
 """
 Ingest stat events for a tournament via the configured stats_adapter_key.
 

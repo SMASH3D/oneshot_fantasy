@@ -168,6 +168,8 @@ CREATE TABLE fantasy_leagues (
     status                  text NOT NULL DEFAULT 'forming',
     settings                jsonb NOT NULL DEFAULT '{}'::jsonb,
     lineup_template         jsonb NOT NULL DEFAULT '[]'::jsonb,
+    scoring_config          jsonb NOT NULL DEFAULT '{}'::jsonb,
+    scoring_config_hash     text NOT NULL DEFAULT '',
     created_at              timestamptz NOT NULL DEFAULT now (),
     updated_at              timestamptz NOT NULL DEFAULT now (),
     CONSTRAINT ck_fantasy_leagues_status CHECK (
@@ -365,5 +367,39 @@ CREATE INDEX idx_usage_ledger_league_round
 
 COMMENT ON TABLE usage_ledger_entries IS 'Append-only facts: participant was used by membership in a fantasy round.';
 COMMENT ON COLUMN usage_ledger_entries.context IS 'e.g. {""slot_role"": ""starter_1""}; policy decides what consumes a use.';
+
+-- ---------------------------------------------------------------------------
+-- Participant Aggregated Scores (Hash-driven)
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE participant_aggregated_scores (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid (),
+    participant_id      uuid NOT NULL REFERENCES participants (id) ON DELETE CASCADE,
+    score_config_hash   text NOT NULL,
+    season              text NOT NULL,
+    stat_scope          text NOT NULL DEFAULT 'season',
+    total_score         numeric(14, 4) NOT NULL DEFAULT 0,
+    breakdown           jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at          timestamptz NOT NULL DEFAULT now (),
+    updated_at          timestamptz NOT NULL DEFAULT now (),
+    CONSTRAINT uq_participant_score_config_season_scope UNIQUE (participant_id, score_config_hash, season, stat_scope)
+);
+
+CREATE INDEX idx_participant_scores_hash ON participant_aggregated_scores (score_config_hash);
+CREATE INDEX idx_participant_scores_season ON participant_aggregated_scores (season);
+
+-- ---------------------------------------------------------------------------
+-- Scoring Config Presets
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE scoring_config_presets (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid (),
+    name                text NOT NULL,
+    scoring_config      jsonb NOT NULL DEFAULT '{}'::jsonb,
+    scoring_config_hash text NOT NULL,
+    created_at          timestamptz NOT NULL DEFAULT now (),
+    updated_at          timestamptz NOT NULL DEFAULT now (),
+    CONSTRAINT uq_scoring_config_presets_hash UNIQUE (scoring_config_hash)
+);
 
 COMMIT;

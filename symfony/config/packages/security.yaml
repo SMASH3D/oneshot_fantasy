@@ -3,18 +3,44 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
-        users_in_memory: { memory: null }
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
 
     firewalls:
         dev:
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
+
         main:
             lazy: true
-            provider: users_in_memory
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                username_parameter: _email
+                password_parameter: _password
+                default_target_path: app_home
+                enable_csrf: true
+            logout:
+                path: app_logout
+                target: app_login
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800 # 7 days
 
-    # No access control for MVP — open API + admin
-    access_control: []
+    access_control:
+        # Public routes — no authentication required
+        - { path: ^/login,    roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/health,   roles: PUBLIC_ACCESS }
+        # Admin panel — admin only
+        - { path: ^/admin,    roles: ROLE_ADMIN }
+        # API — admin only (covers /api and /api/*)
+        - { path: ^/api,      roles: ROLE_ADMIN }
+        # Everything else — requires at least ROLE_USER
+        - { path: ^/,         roles: ROLE_USER }
 
 when@test:
     security:

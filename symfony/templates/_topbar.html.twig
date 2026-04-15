@@ -1,0 +1,71 @@
+{#
+ # _topbar.html.twig
+ # Top navigation bar — included from base.html.twig.
+ #}
+
+<div class="otd-topbar-inner d-flex align-items-center gap-3 px-3 px-lg-4">
+
+    {# Sidebar toggle — mobile only #}
+    <button class="btn btn-sm d-lg-none"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#otdSidebar"
+            aria-controls="otdSidebar"
+            aria-label="Open menu">
+        <i class="bi bi-list fs-5 text-secondary"></i>
+    </button>
+
+    {# Current page title and breadcrumb #}
+    <div class="otd-page-title flex-grow-1">
+        <h1 class="h6 mb-0 fw-semibold text-white">{% block page_title %}{% endblock %}</h1>
+        {% block breadcrumb %}{% endblock %}
+    </div>
+
+    {# Global actions #}
+    <div class="d-flex align-items-center gap-2">
+
+        {# Notifications placeholder #}
+        <button class="btn btn-sm btn-link text-secondary p-1 position-relative" type="button" aria-label="Notifications">
+            <i class="bi bi-bell fs-5"></i>
+        </button>
+
+        {# User menu #}
+        {% if app.user %}
+            <div class="dropdown">
+                <button class="btn btn-sm d-flex align-items-center gap-2 text-white"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <span class="otd-avatar">
+                        {{ app.user.userIdentifier|first|upper }}
+                    </span>
+                    <span class="d-none d-sm-inline text-secondary small">{{ app.user.userIdentifier }}</span>
+                    <i class="bi bi-chevron-down small text-secondary"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li>
+                        <span class="dropdown-item-text small text-secondary">
+                            {{ app.user.userIdentifier }}
+                        </span>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <i class="bi bi-person me-2"></i>Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="{{ path('app_logout') }}">
+                            <i class="bi bi-box-arrow-right me-2"></i>Sign out
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        {% else %}
+            <a href="{{ path('app_login') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-person me-1"></i>Sign in
+            </a>
+        {% endif %}
+
+    </div>
+</div>

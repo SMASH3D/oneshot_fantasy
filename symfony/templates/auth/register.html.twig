@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create account — One Time Draft</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🏀</text></svg>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root { --bg: #0f1419; --surface: #1a2332; --border: #2d3a4d; }
+        body { background: var(--bg); min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 2rem 0; }
+        .auth-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: .75rem; padding: 2rem; }
+        .auth-brand { color: #e7ecf3; text-decoration: none; }
+        .auth-brand:hover { color: #fff; }
+        .form-control, .form-control:focus {
+            background: #0f1419; border-color: var(--border); color: #e7ecf3;
+        }
+        .form-control:focus { box-shadow: 0 0 0 .2rem rgba(91,159,212,.25); border-color: #5b9fd4; }
+        .form-control.is-invalid { border-color: #e06c75; }
+        .form-control::placeholder { color: #4a5a6e; }
+        .form-label { font-size: .875rem; color: #8b9cb3; }
+        .invalid-feedback { font-size: .8rem; }
+    </style>
+</head>
+<body>
+<div class="auth-card mx-3">
+
+    {# Brand #}
+    <a href="{{ path('app_home') }}" class="auth-brand d-flex align-items-center gap-2 mb-4 text-decoration-none">
+        <i class="bi bi-trophy-fill text-warning fs-5"></i>
+        <span class="fw-bold">One Time Draft</span>
+    </a>
+
+    <h1 class="h5 fw-semibold text-white mb-1">Create an account</h1>
+    <p class="text-secondary small mb-4">Pick a nickname and you're ready to draft.</p>
+
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+        {# Email #}
+        <div class="mb-3">
+            {{ form_label(form.email, null, {label_attr: {class: 'form-label'}}) }}
+            {{ form_widget(form.email, {attr: {class: 'form-control' ~ (form.email.vars.errors|length ? ' is-invalid' : ''), autocomplete: 'email', placeholder: 'you@example.com'}}) }}
+            {% if form.email.vars.errors|length %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.email.vars.errors %}{{ error.message }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# Nickname #}
+        <div class="mb-3">
+            {{ form_label(form.nickname, null, {label_attr: {class: 'form-label'}}) }}
+            <div class="input-group">
+                <span class="input-group-text" style="background:#0f1419; border-color:#2d3a4d; color:#4a5a6e;">@</span>
+                {{ form_widget(form.nickname, {attr: {class: 'form-control' ~ (form.nickname.vars.errors|length ? ' is-invalid' : ''), autocomplete: 'username', placeholder: 'YourNickname', maxlength: 50}}) }}
+            </div>
+            {% if form.nickname.vars.errors|length %}
+                <div class="invalid-feedback d-block mt-1">
+                    {% for error in form.nickname.vars.errors %}{{ error.message }}{% endfor %}
+                </div>
+            {% else %}
+                <div class="form-text text-secondary" style="font-size:.8rem;">Letters, numbers, _ and - only.</div>
+            {% endif %}
+        </div>
+
+        {# Password #}
+        <div class="mb-3">
+            {{ form_label(form.plainPassword.first, null, {label_attr: {class: 'form-label'}}) }}
+            {{ form_widget(form.plainPassword.first, {attr: {class: 'form-control' ~ (form.plainPassword.vars.errors|length ? ' is-invalid' : ''), autocomplete: 'new-password', placeholder: 'At least 8 characters'}}) }}
+        </div>
+
+        {# Confirm password #}
+        <div class="mb-4">
+            {{ form_label(form.plainPassword.second, null, {label_attr: {class: 'form-label'}}) }}
+            {{ form_widget(form.plainPassword.second, {attr: {class: 'form-control' ~ (form.plainPassword.vars.errors|length ? ' is-invalid' : ''), autocomplete: 'new-password', placeholder: 'Repeat your password'}}) }}
+            {% if form.plainPassword.vars.errors|length %}
+                <div class="invalid-feedback d-block mt-1">
+                    {% for error in form.plainPassword.vars.errors %}{{ error.message }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-plus-fill me-1"></i> Create account
+        </button>
+
+    {{ form_end(form) }}
+
+    <hr style="border-color: #2d3a4d;" class="my-4">
+
+    <p class="text-center text-secondary small mb-0">
+        Already have an account?
+        <a href="{{ path('app_login') }}" class="text-decoration-none" style="color:#5b9fd4;">Sign in</a>
+    </p>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

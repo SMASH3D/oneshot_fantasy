@@ -1,0 +1,90 @@
+{#
+ # _sidebar.html.twig
+ # Left navigation sidebar — included from base.html.twig.
+ #}
+
+{% set current_route = app.request.attributes.get('_route') %}
+
+<nav class="otd-sidebar-nav d-flex flex-column h-100 px-2 py-3">
+
+    {# Brand / logo #}
+    <a href="{{ path('app_home') }}" class="otd-brand d-flex align-items-center gap-2 px-2 mb-4 text-decoration-none">
+        <i class="bi bi-trophy-fill text-warning fs-4"></i>
+        <span class="fw-bold fs-6 text-white">One Time Draft</span>
+    </a>
+
+    {# Main navigation #}
+    <ul class="nav nav-pills flex-column gap-1 flex-grow-1">
+
+        <li class="nav-item">
+            <a href="{{ path('app_home') }}"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_home' ? 'active' : '' }}">
+                <i class="bi bi-house-fill"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="#"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_league' ? 'active' : '' }}">
+                <i class="bi bi-collection-fill"></i>
+                <span>Leagues</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="#"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_draft' ? 'active' : '' }}">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>Draft</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="#"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_lineup' ? 'active' : '' }}">
+                <i class="bi bi-person-lines-fill"></i>
+                <span>My Team</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="#"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_standings' ? 'active' : '' }}">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span>Standings</span>
+            </a>
+        </li>
+
+    </ul>
+
+    <hr class="border-secondary-subtle my-2">
+
+    {# Secondary links — admin + tools #}
+    <ul class="nav nav-pills flex-column gap-1">
+
+        {% if is_granted('ROLE_ADMIN') %}
+        <li class="nav-item">
+            <a href="{{ path('admin') }}"
+               class="nav-link otd-nav-link text-muted"
+               target="_blank" rel="noopener">
+                <i class="bi bi-gear-fill"></i>
+                <span>Admin</span>
+                <i class="bi bi-box-arrow-up-right ms-auto small opacity-50"></i>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ path('api_doc') }}"
+               class="nav-link otd-nav-link text-muted"
+               target="_blank" rel="noopener">
+                <i class="bi bi-code-slash"></i>
+                <span>API Docs</span>
+                <i class="bi bi-box-arrow-up-right ms-auto small opacity-50"></i>
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+
+</nav>

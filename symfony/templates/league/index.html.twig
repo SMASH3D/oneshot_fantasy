@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Leagues{% endblock %}
+
+{% block body %}
+<div class="ui-container">
+    <header class="ui-header">
+        <div>
+            <h1>Leagues</h1>
+            <p class="ui-muted mb-0">Discover and join fantasy leagues.</p>
+        </div>
+        <div class="ui-header-actions">
+            <a href="{{ path('app_league_new') }}" class="ui-btn ui-btn--primary">
+                <i class="bi bi-plus-lg"></i>
+                <span>Create League</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="ui-card">
+        {% include 'shared/_grid.html.twig' with {grid: grid} %}
+    </div>
+</div>
+{% endblock %}

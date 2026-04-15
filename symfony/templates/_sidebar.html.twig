@@ -25,7 +25,7 @@
         </li>
 
         <li class="nav-item">
-            <a href="#"
+            <a href="{{ path('app_league') }}"
                class="nav-link otd-nav-link {{ current_route starts with 'app_league' ? 'active' : '' }}">
                 <i class="bi bi-collection-fill"></i>
                 <span>Leagues</span>
@@ -33,10 +33,10 @@
         </li>
 
         <li class="nav-item">
-            <a href="#"
-               class="nav-link otd-nav-link {{ current_route starts with 'app_draft' ? 'active' : '' }}">
-                <i class="bi bi-lightning-charge-fill"></i>
-                <span>Draft</span>
+            <a href="{{ path('app_tournament') }}"
+               class="nav-link otd-nav-link {{ current_route starts with 'app_tournament' ? 'active' : '' }}">
+                <i class="bi bi-trophy"></i>
+                <span>Tournaments</span>
             </a>
         </li>
 
@@ -48,13 +48,6 @@
             </a>
         </li>
 
-        <li class="nav-item">
-            <a href="#"
-               class="nav-link otd-nav-link {{ current_route starts with 'app_standings' ? 'active' : '' }}">
-                <i class="bi bi-bar-chart-fill"></i>
-                <span>Standings</span>
-            </a>
-        </li>
 
     </ul>
 

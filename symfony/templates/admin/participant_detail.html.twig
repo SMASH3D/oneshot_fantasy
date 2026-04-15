@@ -8,35 +8,97 @@
         
         {# Prepare Radar stats data using Percentages of Maximum #}
         {% set template_stats = {'points': 0, 'assists': 0, 'rebounds': 0, 'steals': 0, 'blocks': 0, 'turnovers': 0, 'minutes_played': 0, 'games_played': 0, 'plus_minus': 0} %}
+        {% set template_raw = {} %}
+        {% for k, v in template_stats %}
+            {% set template_raw = template_raw|merge({(k): {'total': 0, 'average': 0, 'rate': 0}}) %}
+        {% endfor %}
+        
         {% set radar_stats = template_stats %}
         {% set benchman_radar_stats = template_stats %}
-        {% set radar_raw = template_stats %}
-        {% set benchman_raw = template_stats %}
+        {% set radar_raw = template_raw %}
+        {% set benchman_raw = template_raw %}
 
+        {# Extract raw stats #}
         {% for stat in entity.instance.stats %}
             {% set code = stat.statDefinition.code %}
-            {% if code in radar_stats|keys %}
-                {% set max_avg = max_stats[code].average|default(1) %}
-                {% if max_avg == 0 %}{% set max_avg = 1 %}{% endif %}
-                
+            {% if code in radar_raw|keys %}
                 {% set stat_avg = stat.averageValue|default(0) %}
                 {% set stat_tot = stat.totalValue|default(0) %}
-                {% set pct = (stat_avg / max_avg) * 100 %}
-                
-                {% set radar_stats = radar_stats|merge({(code): pct}) %}
-                {% set radar_raw = radar_raw|merge({(code): {'total': stat_tot, 'average': stat_avg}}) %}
+                {% set radar_raw = radar_raw|merge({(code): {'total': stat_tot, 'average': stat_avg, 'rate': 0}}) %}
             {% endif %}
         {% endfor %}
 
+        {# Calculate player radar percentages and Turnover rates #}
+        {% for code in radar_stats|keys %}
+            {% set stat_avg = radar_raw[code].average %}
+            {% set stat_tot = radar_raw[code].total %}
+            
+            {% set pct = 0 %}
+            {% if code in ['games_played', 'minutes_played'] %}
+                {% set max_tot = max_stats[code].total|default(1) %}
+                {% if max_tot == 0 %}{% set max_tot = 1 %}{% endif %}
+                {% set pct = (stat_tot / max_tot) * 100 %}
+            {% elseif code == 'turnovers' %}
+                {% set min_played = radar_raw['minutes_played'].total %}
+                {% if min_played > 0 %}
+                    {% set rate = (stat_tot / min_played) * 10 
+                    %}
+                    {% set radar_raw = radar_raw|merge({ 'turnovers': radar_raw.turnovers|merge({'rate': rate}) }) %}
+                    
+                    {# Turnover Score Logic: 100% = Best Rate (Min), 0% = Worst Rate (Max) #}
+                    {% set best = turnover_metrics.best %}
+                    {% set worst = turnover_metrics.worst %}
+                    {% if worst > best %}
+                        {% set pct = 100 * (worst - rate) / (worst - best) %}
+                    {% else %}
+                        {% set pct = 100 %}
+                    {% endif %}
+                {% else %}
+                    {% set pct = 0 %}
+                {% endif %}
+            {% else %}
+                {% set max_avg = max_stats[code].average|default(1) %}
+                {% if max_avg == 0 %}{% set max_avg = 1 %}{% endif %}
+                {% set pct = (stat_avg / max_avg) * 100 %}
+            {% endif %}
+            
+            {% set pct = max(0, min(100, pct)) %}
+            {% set radar_stats = radar_stats|merge({(code): pct}) %}
+        {% endfor %}
+
+        {# Calculate benchman radar percentages #}
         {% for code, val in benchman_radar_stats %}
-            {% set max_avg = max_stats[code].average|default(1) %}
-            {% if max_avg == 0 %}{% set max_avg = 1 %}{% endif %}
-            
             {% set bench_avg = benchman_stats[code].average|default(0) %}
-            {% set bench_pct = (bench_avg / max_avg) * 100 %}
+            {% set bench_tot = benchman_stats[code].total|default(0) %}
             
+            {% set bench_pct = 0 %}
+            {% if code in ['games_played', 'minutes_played'] %}
+                {% set max_tot = max_stats[code].total|default(1) %}
+                {% set bench_pct = (bench_tot / max_tot) * 100 %}
+            {% elseif code == 'turnovers' %}
+                {% set min_played = benchman_stats['minutes_played'].total|default(0) %}
+                {% if min_played > 0 %}
+                    {% set rate = (bench_tot / min_played) * 10 %}
+                    {% set benchman_raw = benchman_raw|merge({ 'turnovers': benchman_raw.turnovers|merge({'rate': rate}) }) %}
+                    
+                    {% set best = turnover_metrics.best %}
+                    {% set worst = turnover_metrics.worst %}
+                    {% if worst > best %}
+                        {% set bench_pct = 100 * (worst - rate) / (worst - best) %}
+                    {% else %}
+                        {% set bench_pct = 100 %}
+                    {% endif %}
+                {% else %}
+                    {% set bench_pct = 0 %}
+                {% endif %}
+            {% else %}
+                {% set max_avg = max_stats[code].average|default(1) %}
+                {% set bench_pct = (bench_avg / max_avg) * 100 %}
+            {% endif %}
+            
+            {% set bench_pct = max(0, min(100, bench_pct)) %}
             {% set benchman_radar_stats = benchman_radar_stats|merge({(code): bench_pct}) %}
-            {% set benchman_raw = benchman_raw|merge({(code): bench_avg}) %}
+            {% set benchman_raw = benchman_raw|merge({(code): {'total': bench_tot, 'average': bench_avg, 'rate': benchman_raw[code].rate|default(0)}}) %}
         {% endfor %}
 
         <div class="row align-items-center">
@@ -46,9 +108,9 @@
                         <tr>
                             <th>Statistic</th>
                             <th>Total</th>
-                            <th>Avg</th>
-                            <th>Max Total</th>
-                            <th>Max Avg</th>
+                            <th>Avg / Rate</th>
+                            <th>Max Tot</th>
+                            <th>Max Ref</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,18 +118,36 @@
                             <tr>
                                 <td>{{ code|replace({'_': ' '})|title }}</td>
                                 <td>{{ radar_raw[code].total|default(0)|number_format(1) }}</td>
-                                <td>{{ radar_raw[code].average|default(0)|number_format(1) }}</td>
+                                <td>
+                                    {% if code == 'turnovers' %}
+                                        {{ radar_raw[code].rate|default(0)|number_format(2) }} (TO/10)
+                                    {% else %}
+                                        {{ radar_raw[code].average|default(0)|number_format(1) }}
+                                    {% endif %}
+                                </td>
                                 <td>{{ max_stats[code].total|default(0)|number_format(1) }}</td>
-                                <td>{{ max_stats[code].average|default(0)|number_format(1) }}</td>
+                                <td>
+                                    {% if code == 'turnovers' %}
+                                        {{ turnover_metrics.best|number_format(2) }} (Best)
+                                    {% else %}
+                                        {{ max_stats[code].average|default(0)|number_format(1) }}
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
             <div class="col-md-7">
-                <div style="width: 100%; height: 450px; max-width: 100%; margin: 0 auto;">
-                    <canvas id="participantRadarChart"></canvas>
-                </div>
+                {{ include('admin/_radar_chart.html.twig', {
+                    'radar_stats': radar_stats,
+                    'benchman_radar_stats': benchman_radar_stats,
+                    'radar_raw': radar_raw,
+                    'benchman_raw': benchman_raw,
+                    'max_stats': max_stats,
+                    'turnover_metrics': turnover_metrics,
+                    'stat_keys': ['points', 'assists', 'rebounds', 'steals', 'blocks', 'turnovers', 'minutes_played', 'games_played', 'plus_minus']
+                }) }}
             </div>
         </div>
     </div>
@@ -111,82 +191,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 1. Render Radar Chart
-            const ctx = document.getElementById('participantRadarChart').getContext('2d');
-            const radarData = {{ radar_stats|json_encode|raw }};
-            const benchmanData = {{ benchman_radar_stats|json_encode|raw }};
-            const radarRaw = {{ radar_raw|json_encode|raw }};
-            const benchmanRaw = {{ benchman_raw|json_encode|raw }};
-            const maxStats = {{ max_stats|default({})|json_encode|raw }};
-            
-            const statKeys = ['points', 'assists', 'rebounds', 'steals', 'blocks', 'turnovers', 'minutes_played', 'games_played', 'plus_minus'];
-            const statLabels = statKeys.map(k => k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
-
-            new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: statLabels,
-                    datasets: [
-                        {
-                            label: 'Player Performance vs Max (%)',
-                            data: statKeys.map(k => radarData[k] || 0),
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'League Average / Baseline (%)',
-                            data: statKeys.map(k => benchmanData[k] || 0),
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
-                            borderWidth: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100, // Enforce normalized percentage limits gracefully
-                            ticks: {
-                                display: false, // hide the radar chart scale numbers
-                                stepSize: 20
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let key = statKeys[context.dataIndex];
-                                    let maxVal = maxStats[key]?.average || 1;
-                                    let rawVal = context.datasetIndex === 0 ? radarRaw[key]?.average : benchmanRaw[key];
-                                    
-                                    let percentage = context.raw.toFixed(1).replace('.', ',');
-                                    let rawFormatted = parseFloat(rawVal || 0).toFixed(1).replace('.', ',');
-                                    let maxFormatted = parseFloat(maxVal).toFixed(2).replace('.', ',');
-                                    
-                                    return percentage + '% (' + rawFormatted + ' vs ' + maxFormatted + ')';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
             // 2. Interactive Score Displays
             const aggregatedScores = {{ scores_json|json_encode|raw }};
             const presetSelector = document.getElementById('preset-selector');

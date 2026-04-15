@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistics — {{ tournament.name }}{% endblock %}
+
+{% block body %}
+<div class="ui-container">
+    <header class="ui-header">
+        <div>
+            <a href="{{ path('app_tournament_show', {slug: tournament.slug}) }}" class="text-decoration-none small ui-muted d-block mb-1">
+                <i class="bi bi-arrow-left"></i> Back to {{ tournament.name }}
+            </a>
+            <h1>Tournament Statistics</h1>
+            <p class="ui-muted mb-0">Roster and health status for participants in {{ tournament.name }}.</p>
+        </div>
+    </header>
+
+    <div class="ui-card">
+        {% include 'shared/_grid.html.twig' with {grid: grid} %}
+    </div>
+</div>
+{% endblock %}

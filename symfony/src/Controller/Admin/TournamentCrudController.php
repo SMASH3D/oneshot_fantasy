@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Entity\Tournament;
+use App\Enum\BracketType;
 use App\Form\Type\JsonCodeEditorType;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\CodeEditorField;
@@ -32,10 +34,23 @@ class TournamentCrudController extends AbstractCrudController
         yield TextField::new('defaultScoringEngineKey', 'Scoring Engine')->hideOnIndex();
         yield TextField::new('timezone')->hideOnIndex();
         yield TextField::new('status');
+        yield ChoiceField::new('bracketType', 'Bracket Type')
+            ->setChoices([
+                'NBA Postseason tournament' => BracketType::NbaPostseason,
+                'Single-Elimination Bracket' => BracketType::SingleElimination,
+                'Double-Elimination Bracket' => BracketType::DoubleElimination,
+                'Group Stage Bracket' => BracketType::GroupStage,
+            ])
+            ->allowMultipleChoices(false)
+            ->setRequired(false)
+            ->hideOnIndex();
         yield DateTimeField::new('startsAt', 'Starts');
         yield DateTimeField::new('endsAt', 'Ends')->hideOnIndex();
         yield CodeEditorField::new('metadata')
             ->setFormType(JsonCodeEditorType::class)
+            ->hideOnIndex();
+        yield CodeEditorField::new('cmsContent', 'CMS Content')
+            ->setLanguage('twig')
             ->hideOnIndex();
         yield DateTimeField::new('createdAt')->hideOnForm();
     }

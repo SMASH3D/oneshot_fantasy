@@ -1,0 +1,13 @@
+{# templates/league/_sport_icon.html.twig #}
+<div class="d-flex align-items-center gap-2">
+    {% set sport_icon = 'bi-trophy' %}
+    {% if value == 'basketball' %}
+        {% set sport_icon = 'bi-basketball' %}
+    {% elseif value == 'soccer' %}
+        {% set sport_icon = 'bi-soccer-ball' %}
+    {% elseif value == 'football' %}
+        {% set sport_icon = 'bi-football' %}
+    {% endif %}
+    <i class="bi {{ sport_icon }} opacity-75"></i>
+    <span class="text-capitalize">{{ value }}</span>
+</div>

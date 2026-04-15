@@ -71,22 +71,22 @@ class ParticipantCrudController extends AbstractCrudController
             $presets = $this->em->getRepository(ScoringConfigPreset::class)->findAll();
             $responseParameters->set('scoring_presets', $presets);
 
-            $conn = $this->em->getConnection();
+            /** @var \App\Entity\Participant $participant */
+            $participant = $responseParameters->get('entity')->getInstance();
+            $firstStat = $participant->getStats()->first();
+            $season = $firstStat ? $firstStat->getSeason() : '2025-26';
 
-            $maxStats = [];
-            $maxSql = "SELECT sd.code, MAX(ps.total_value) as max_tot, MAX(ps.average_value) as max_avg FROM participant_stats ps JOIN stat_definitions sd ON ps.stat_definition_id = sd.id GROUP BY sd.code";
-            $maxResult = $conn->executeQuery($maxSql)->fetchAllAssociative();
-            foreach ($maxResult as $row) {
-                $maxStats[$row['code']] = [
-                    'total' => (float) $row['max_tot'],
-                    'average' => (float) $row['max_avg']
-                ];
-            }
+            $statRepo = $this->em->getRepository(\App\Entity\ParticipantStat::class);
+            
+            $maxStats = $statRepo->getLeagueMaxStats($season);
             $responseParameters->set('max_stats', $maxStats);
 
+            $turnoverMetrics = $statRepo->getTurnoverMetrics($season);
+            $responseParameters->set('turnover_metrics', $turnoverMetrics);
+
             $benchmanStats = [];
-            $benchSql = "SELECT sd.code, ps.total_value as tot_val, ps.average_value as avg_val FROM participant_stats ps JOIN stat_definitions sd ON ps.stat_definition_id = sd.id JOIN participants p ON ps.participant_id = p.id WHERE p.external_id = 'clifford_benchman'";
-            $benchResult = $conn->executeQuery($benchSql)->fetchAllAssociative();
+            $benchSql = "SELECT sd.code, ps.total_value as tot_val, ps.average_value as avg_val FROM participant_stats ps JOIN stat_definitions sd ON ps.stat_definition_id = sd.id JOIN participants p ON ps.participant_id = p.id WHERE p.external_id = 'clifford_benchman' AND ps.season = :season";
+            $benchResult = $this->em->getConnection()->executeQuery($benchSql, ['season' => $season])->fetchAllAssociative();
             foreach ($benchResult as $row) {
                 $benchmanStats[$row['code']] = [
                     'total' => (float) $row['tot_val'],

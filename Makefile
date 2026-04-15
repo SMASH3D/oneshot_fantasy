@@ -4,7 +4,7 @@
 
 .PHONY: help install install-symfony install-worker install-db start symfony-serve symfony-cc \
 	db-up db-down db-logs stop healthcheck probe-db worker-sync worker-score worker-score-batch \
-	ingest-nba
+	ingest-nba ingest-nba-playoffs
 
 # --- Paths ---
 BACKEND_DIR        := backend
@@ -12,7 +12,7 @@ SYMFONY_DIR        := symfony
 COMPOSE_FILE       := $(BACKEND_DIR)/docker-compose.yml
 COMPOSE            := docker compose -f $(COMPOSE_FILE)
 SCHEMA_FILE        := $(BACKEND_DIR)/sql/schema.sql
-VENV               := $(BACKEND_DIR)/.venv
+VENV               := $(CURDIR)/$(BACKEND_DIR)/.venv
 PIP                := $(VENV)/bin/pip
 PY                 := $(VENV)/bin/python
 
@@ -98,3 +98,7 @@ worker-score-batch: ## Batch scoring (set SCORE_JOBS_FILE=path; loads backend/.e
 
 ingest-nba: ## Import current NBA roster into participants table (loads backend/.env)
 	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) scripts/import_nba_players.py )
+
+ingest-nba-playoffs: ## Import NBA playoff series into tournament_rounds (SLUG=required, SEASON=optional; loads backend/.env)
+	@test -n "$(SLUG)" || (echo "Usage: make ingest-nba-playoffs SLUG=nba-playoffs-2026 [SEASON=2025-26]" >&2 && exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) ingestion/scripts/import_nba_playoffs.py --slug "$(SLUG)" $(if $(SEASON),--season "$(SEASON)",) )

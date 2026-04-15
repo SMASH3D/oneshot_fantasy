@@ -1,0 +1,102 @@
+{# symfony/templates/admin/_radar_chart.html.twig #}
+<div style="width: 100%; height: 450px; max-width: 100%; margin: 0 auto;">
+    <canvas id="participantRadarChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('participantRadarChart').getContext('2d');
+            
+            const radarData = {{ radar_stats|json_encode|raw }};
+            const benchmanData = {{ benchman_radar_stats|json_encode|raw }};
+            const radarRaw = {{ radar_raw|json_encode|raw }};
+            const benchmanRaw = {{ benchman_raw|json_encode|raw }};
+            const maxStats = {{ max_stats|json_encode|raw }};
+            const turnoverMetrics = {{ turnover_metrics|json_encode|raw }};
+
+            const statKeys = {{ stat_keys|json_encode|raw }};
+            const statLabels = statKeys.map(k => k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: statLabels,
+                    datasets: [
+                        {
+                            label: 'Player Performance (%)',
+                            data: statKeys.map(k => radarData[k] || 0),
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'League Average (%)',
+                            data: statKeys.map(k => benchmanData[k] || 0),
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                display: false,
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const key = statKeys[context.dataIndex];
+                                    const percentage = context.raw.toFixed(1).replace('.', ',');
+                                    
+                                    if (key === 'turnovers') {
+                                        const playerRate = context.datasetIndex === 0 ? radarRaw['turnovers'].rate : benchmanRaw['turnovers'].rate;
+                                        const bestRate = turnoverMetrics.best;
+                                        
+                                        const playerFormatted = parseFloat(playerRate || 0).toFixed(1).replace('.', ',');
+                                        const bestFormatted = parseFloat(bestRate || 0).toFixed(1).replace('.', ',');
+                                        
+                                        return 'avg turnover / 10 min (' + playerFormatted + ' vs ' + bestFormatted + ')';
+                                    }
+
+                                    const isTotalBased = ['games_played', 'minutes_played'].includes(key);
+                                    const maxVal = isTotalBased ? (maxStats[key]?.total || 1) : (maxStats[key]?.average || 1);
+                                    let rawVal;
+                                    if (context.datasetIndex === 0) {
+                                        rawVal = isTotalBased ? radarRaw[key]?.total : radarRaw[key]?.average;
+                                    } else {
+                                        rawVal = isTotalBased ? benchmanRaw[key]?.total : benchmanRaw[key]?.average;
+                                    }
+                                    
+                                    const rawFormatted = parseFloat(rawVal || 0).toFixed(1).replace('.', ',');
+                                    const maxFormatted = parseFloat(maxVal).toFixed(2).replace('.', ',');
+                                    
+                                    return percentage + '% (' + rawFormatted + ' vs ' + maxFormatted + ')';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    })();
+</script>

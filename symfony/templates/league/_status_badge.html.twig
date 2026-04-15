@@ -1,0 +1,12 @@
+{# templates/league/_status_badge.html.twig #}
+{% if value == 'forming' %}
+    <span class="badge rounded-pill bg-info-subtle text-info border border-info-subtle">Forming</span>
+{% elseif value == 'draft' %}
+    <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle">Draft</span>
+{% elseif value == 'active' %}
+    <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">Active</span>
+{% elseif value == 'completed' %}
+    <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary_subtle">Completed</span>
+{% else %}
+    <span class="badge rounded-pill bg-dark border border-secondary">{{ value|capitalize }}</span>
+{% endif %}

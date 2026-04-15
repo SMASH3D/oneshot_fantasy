@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tournaments{% endblock %}
+
+{% block body %}
+<div class="ui-container">
+    <header class="ui-header">
+        <div>
+            <h1>Tournaments</h1>
+            <p class="ui-muted mb-0">Browse and follow official sport tournaments.</p>
+        </div>
+        <div class="ui-header-actions">
+            {# Actions placeholder #}
+        </div>
+    </header>
+
+    <div class="ui-card">
+        {% include 'shared/_grid.html.twig' with {grid: grid} %}
+    </div>
+</div>
+{% endblock %}

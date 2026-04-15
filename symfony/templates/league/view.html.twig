@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ league.name }}{% endblock %}
+
+{% block body %}
+<div class="ui-container">
+    <header class="ui-header">
+        <div>
+            <a href="{{ path('app_league') }}" class="text-decoration-none small ui-muted d-block mb-2">
+                <i class="bi bi-arrow-left"></i> Back to Leagues
+            </a>
+            <h1>{{ league.name }}</h1>
+            <p class="ui-muted mb-0">{{ league.tournament.name }} — {{ league.status|capitalize }}</p>
+        </div>
+        <div class="ui-header-actions">
+            {% if league.status != 'completed' %}
+                <button class="ui-btn ui-btn--primary">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Join League</span>
+                </button>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="ui-card">
+        <h2>About this League</h2>
+        <p class="ui-muted">Full league details, statistics, and leaderboard will be displayed here.</p>
+    </div>
+</div>
+{% endblock %}

@@ -73,6 +73,12 @@
             "config/routes/easyadmin.yaml"
         ]
     },
+    "kibatic/datagrid-bundle": {
+        "version": "v1.3.9"
+    },
+    "knplabs/knp-paginator-bundle": {
+        "version": "v6.10.0"
+    },
     "nelmio/cors-bundle": {
         "version": "2.6",
         "recipe": {
@@ -141,6 +147,15 @@
             "src/Kernel.php",
             ".editorconfig"
         ]
+    },
+    "symfony/maker-bundle": {
+        "version": "1.67",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
+        }
     },
     "symfony/property-info": {
         "version": "7.4",

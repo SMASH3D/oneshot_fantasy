@@ -1,0 +1,291 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* ───── Bracket Layout ───── */
+        .bracket-wrap {
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+        .bracket-columns {
+            display: flex;
+            gap: 1.25rem;
+            min-width: max-content;
+            align-items: flex-start;
+        }
+        .bracket-column {
+            flex: 0 0 220px;
+            width: 220px;
+        }
+        .bracket-round-label {
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--ui-accent, #7c6cff);
+            padding: .5rem .25rem .75rem;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            margin-bottom: .75rem;
+        }
+        .bracket-series-list {
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+        }
+
+        /* ───── Matchup Card ───── */
+        .bracket-matchup {
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: .625rem;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        .bracket-matchup.is-active {
+            border-color: rgba(124, 108, 255, .4);
+            box-shadow: 0 0 0 1px rgba(124, 108, 255, .15);
+        }
+        .bracket-matchup.is-complete {
+            border-color: rgba(255,255,255,.15);
+        }
+        .bracket-matchup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .35rem .625rem;
+            background: rgba(255,255,255,.03);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+        .bracket-series-badge {
+            font-size: .6rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            padding: .15em .5em;
+            border-radius: 999px;
+        }
+        .badge-live    { background: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+        .badge-done    { background: rgba(255,255,255,.06); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.1); }
+        .badge-pending { background: rgba(124,108,255,.1); color: rgba(124,108,255,.8); border: 1px solid rgba(124,108,255,.2); }
+        .bracket-series-score {
+            font-size: .75rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.7);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ───── Team Rows ───── */
+        .bracket-team {
+            display: grid;
+            grid-template-columns: 2.5rem 1fr auto auto;
+            align-items: center;
+            gap: .375rem;
+            padding: .5rem .625rem;
+            border-bottom: 1px solid rgba(255,255,255,.045);
+            transition: background .15s;
+        }
+        .bracket-team:last-of-type { border-bottom: none; }
+        .team-winner {
+            background: rgba(124,108,255,.12);
+        }
+        .team-winner .bracket-team-name {
+            color: #fff;
+            font-weight: 600;
+        }
+        .team-loser .bracket-team-name,
+        .team-loser .bracket-team-abbr {
+            opacity: .45;
+        }
+        .bracket-team-abbr {
+            font-size: .65rem;
+            font-weight: 800;
+            letter-spacing: .06em;
+            color: rgba(255,255,255,.45);
+            font-variant-numeric: tabular-nums;
+        }
+        .bracket-team-name {
+            font-size: .8rem;
+            color: rgba(255,255,255,.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bracket-team-wins {
+            font-size: .85rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.4);
+            font-variant-numeric: tabular-nums;
+            min-width: 1.25rem;
+            text-align: right;
+        }
+        .wins-highlight { color: #a5b4fc; }
+        .trophy-icon {
+            color: #fbbf24;
+            font-size: .75rem;
+            margin-left: .25rem;
+        }
+
+        /* ───── Individual Games ───── */
+        .bracket-games {
+            border-top: 1px solid rgba(255,255,255,.05);
+            padding: .375rem .625rem .5rem;
+        }
+        .bracket-game {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .2rem 0;
+            font-size: .7rem;
+            color: rgba(255,255,255,.5);
+        }
+        .game-num {
+            font-weight: 700;
+            min-width: 1.5rem;
+            color: rgba(255,255,255,.35);
+            font-variant-numeric: tabular-nums;
+        }
+        .game-score {
+            flex: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .game-live-score { color: #4ade80; font-weight: 700; animation: pulse 1.5s infinite; }
+        .game-tbd        { color: rgba(255,255,255,.3); }
+        .game-winner-abbr { font-weight: 700; color: #a5b4fc; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: .5; }
+        }
+
+        /* ───── Responsive ───── */
+        @media (max-width: 768px) {
+            .bracket-column { flex: 0 0 185px; width: 185px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="ui-container">
+    <header class="ui-header">
+        <div>
+            <a href="{{ path('app_tournament') }}" class="text-decoration-none small ui-muted d-block mb-1">
+                <i class="bi bi-arrow-left"></i> Back to Tournaments
+            </a>
+            <h1>{{ tournament.name }}</h1>
+            <div class="d-flex align-items-center gap-2 ui-muted small">
+                <span class="text-capitalize">{{ tournament.sportKey }}</span>
+                <span>•</span>
+                <span>{{ tournament.startsAt ? tournament.startsAt|date('M d, Y') : 'Date TBD' }}</span>
+                <span>•</span>
+                {% include 'tournament/_status_badge.html.twig' with {'value': tournament.status} %}
+                {% if tournament.bracketType %}
+                    <span>•</span>
+                    <span class="badge bg-dark border border-secondary small">{{ tournament.bracketType.label() }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="ui-header-actions">
+            <a href="{{ path('app_tournament_stats', {slug: tournament.slug}) }}" class="ui-btn ui-btn--primary">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span>Statistics</span>
+            </a>
+        </div>
+    </header>
+
+    {# CMS Content Block #}
+    {% if tournament.cmsContent %}
+        <div class="ui-card mb-4">
+            <div class="ui-cms-content">
+                {{ tournament.cmsContent|raw }}
+            </div>
+        </div>
+    {% endif %}
+
+    {# Tabs #}
+    <ul class="nav nav-pills gap-2 mb-4" id="tournamentTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="leaderboard-tab" data-bs-toggle="pill" data-bs-target="#leaderboard" type="button" role="tab">
+                <i class="bi bi-bar-chart me-1"></i>Leaderboard
+            </button>
+        </li>
+        {% if bracketRounds is not empty %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="bracket-tab" data-bs-toggle="pill" data-bs-target="#bracket" type="button" role="tab">
+                <i class="bi bi-diagram-3 me-1"></i>Bracket
+            </button>
+        </li>
+        {% endif %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="leagues-tab" data-bs-toggle="pill" data-bs-target="#leagues" type="button" role="tab">
+                <i class="bi bi-people me-1"></i>Leagues
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="tournamentTabsContent">
+        {# Leaderboard Tab #}
+        <div class="tab-pane fade show active" id="leaderboard" role="tabpanel">
+            <div class="ui-card p-0 overflow-hidden">
+                <div class="ui-table-wrap">
+                    <table class="ui-table mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Rank</th>
+                                <th>Player</th>
+                                <th class="text-center">Score</th>
+                                <th class="pe-4">League</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in leaderboard %}
+                                <tr>
+                                    <td class="ps-4">
+                                        {% if entry.rank == 1 %}
+                                            <i class="bi bi-trophy-fill text-warning me-1"></i>
+                                        {% elseif entry.rank == 2 %}
+                                            <i class="bi bi-trophy-fill text-secondary me-1"></i>
+                                        {% elseif entry.rank == 3 %}
+                                            <i class="bi bi-trophy-fill me-1" style="color:#cd7f32"></i>
+                                        {% endif %}
+                                        <span class="fw-bold">{{ entry.rank }}</span>
+                                    </td>
+                                    <td class="fw-semibold text-white">{{ entry.player }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-dark-subtle border border-secondary fw-mono px-3">
+                                            {{ entry.score|number_format(1) }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <a href="{{ path('app_league_view', {id: entry.leagueId}) }}" class="text-decoration-none small">
+                                            {{ entry.league }}
+                                            <i class="bi bi-arrow-up-right small ms-1"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {# Bracket Tab (NBA Postseason only) #}
+        {% if bracketRounds is not empty %}
+        <div class="tab-pane fade" id="bracket" role="tabpanel">
+            <div class="ui-card">
+                {% include 'tournament/_bracket.html.twig' with {bracketRounds: bracketRounds} %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Leagues Tab #}
+        <div class="tab-pane fade" id="leagues" role="tabpanel">
+            <div class="ui-card">
+                {% include 'shared/_grid.html.twig' with {grid: leaguesGrid} %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

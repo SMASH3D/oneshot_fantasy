@@ -1,0 +1,126 @@
+{# tournament/_bracket.html.twig
+   NBA Postseason bracket display — rounds as columns, series as cards.
+   Variables: bracketRounds (list of {round, games, winsHome, winsAway, seriesScore})
+#}
+
+{% if bracketRounds is empty %}
+    <div class="text-center py-5 ui-muted">
+        <i class="bi bi-diagram-3 fs-1 d-block mb-3 opacity-25"></i>
+        <p class="mb-0">Bracket data not yet available.</p>
+        <p class="small mt-1">Run the playoff ingestion script to populate series data.</p>
+    </div>
+{% else %}
+
+{# Group rounds by canonical_key for column display. NBA Postseason has 4 round types.
+   Multiple series per canonical round (e.g. 8 First Round matchups) are grouped together. #}
+{% set roundGroups = {} %}
+{% set roundOrder = [] %}
+{% for entry in bracketRounds %}
+    {% set key = entry.round.canonicalKey ?? 'round_' ~ entry.round.orderIndex %}
+    {% set name = entry.round.name %}
+    {% if key not in roundOrder %}
+        {% set roundOrder = roundOrder|merge([key]) %}
+    {% endif %}
+    {% if roundGroups[key] is not defined %}
+        {% set roundGroups = roundGroups|merge({(key): {name: name, series: []}}) %}
+    {% endif %}
+    {# Twig workaround: rebuild group with new series appended #}
+    {% set currentGroup = roundGroups[key] %}
+    {% set updatedSeries = currentGroup.series|merge([entry]) %}
+    {% set roundGroups = roundGroups|merge({(key): {name: name, series: updatedSeries}}) %}
+{% endfor %}
+
+<div class="bracket-wrap">
+    <div class="bracket-columns">
+        {% for key in roundOrder %}
+            {% set group = roundGroups[key] %}
+            <div class="bracket-column">
+                <div class="bracket-round-label">{{ group.name }}</div>
+                <div class="bracket-series-list">
+                    {% for entry in group.series %}
+                        {% set round = entry.round %}
+                        {% set homeTeam = round.homeTeam %}
+                        {% set awayTeam = round.awayTeam %}
+                        {% set homeWins = entry.winsHome %}
+                        {% set awayWins = entry.winsAway %}
+                        {% set isComplete = (homeWins >= 4 or awayWins >= 4) %}
+                        {% set homeWon = isComplete and homeWins > awayWins %}
+                        {% set awayWon = isComplete and awayWins > homeWins %}
+
+                        <div class="bracket-matchup {{ round.status == 'completed' ? 'is-complete' : (round.status == 'active' ? 'is-active' : '') }}">
+                            {# Series header: status badge + score #}
+                            <div class="bracket-matchup-header">
+                                {% if round.status == 'active' %}
+                                    <span class="bracket-series-badge badge-live">LIVE</span>
+                                {% elseif round.status == 'completed' %}
+                                    <span class="bracket-series-badge badge-done">FINAL</span>
+                                {% else %}
+                                    <span class="bracket-series-badge badge-pending">UPCOMING</span>
+                                {% endif %}
+                                {% if round.status != 'pending' %}
+                                    <span class="bracket-series-score">{{ entry.seriesScore }}</span>
+                                {% endif %}
+                            </div>
+
+                            {# Home team row #}
+                            <div class="bracket-team {{ homeWon ? 'team-winner' : (awayWon ? 'team-loser' : '') }}">
+                                <span class="bracket-team-abbr">
+                                    {% if homeTeam %}{{ homeTeam.abbreviation ?? homeTeam.name|slice(0, 3)|upper }}{% else %}TBD{% endif %}
+                                </span>
+                                <span class="bracket-team-name">
+                                    {% if homeTeam %}{{ homeTeam.city ? homeTeam.city ~ ' ' ~ homeTeam.name : homeTeam.name }}{% else %}TBD{% endif %}
+                                </span>
+                                <span class="bracket-team-wins {{ homeWon ? 'wins-highlight' : '' }}">
+                                    {% if round.status != 'pending' %}{{ homeWins }}{% else %}&mdash;{% endif %}
+                                </span>
+                                {% if homeWon %}<i class="bi bi-trophy-fill trophy-icon"></i>{% endif %}
+                            </div>
+
+                            {# Away team row #}
+                            <div class="bracket-team {{ awayWon ? 'team-winner' : (homeWon ? 'team-loser' : '') }}">
+                                <span class="bracket-team-abbr">
+                                    {% if awayTeam %}{{ awayTeam.abbreviation ?? awayTeam.name|slice(0, 3)|upper }}{% else %}TBD{% endif %}
+                                </span>
+                                <span class="bracket-team-name">
+                                    {% if awayTeam %}{{ awayTeam.city ? awayTeam.city ~ ' ' ~ awayTeam.name : awayTeam.name }}{% else %}TBD{% endif %}
+                                </span>
+                                <span class="bracket-team-wins {{ awayWon ? 'wins-highlight' : '' }}">
+                                    {% if round.status != 'pending' %}{{ awayWins }}{% else %}&mdash;{% endif %}
+                                </span>
+                                {% if awayWon %}<i class="bi bi-trophy-fill trophy-icon"></i>{% endif %}
+                            </div>
+
+                            {# Individual game results #}
+                            {% if entry.games is not empty %}
+                                <div class="bracket-games">
+                                    {% for game in entry.games %}
+                                        <div class="bracket-game {{ game.status == 'complete' ? 'game-done' : (game.status == 'live' ? 'game-live' : 'game-scheduled') }}">
+                                            <span class="game-num">G{{ loop.index }}</span>
+                                            {% if game.status == 'complete' %}
+                                                <span class="game-score">
+                                                    {{ game.homeScore }} – {{ game.awayScore }}
+                                                </span>
+                                                <span class="game-winner-abbr">
+                                                    {% if game.winnerTeam %}
+                                                        {{ game.winnerTeam.abbreviation ?? game.winnerTeam.name|slice(0, 3)|upper }} ✓
+                                                    {% endif %}
+                                                </span>
+                                            {% elseif game.status == 'live' %}
+                                                <span class="game-score game-live-score">LIVE</span>
+                                            {% else %}
+                                                <span class="game-score game-tbd">
+                                                    {{ game.date ? game.date|date('M d') : 'TBD' }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

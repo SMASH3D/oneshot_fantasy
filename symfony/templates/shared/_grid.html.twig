@@ -1,0 +1,67 @@
+{# templates/shared/_grid.html.twig #}
+{% set current_route = app.request.attributes.get('_route') %}
+{% set current_params = app.request.attributes.get('_route_params')|merge(app.request.query.all) %}
+{% set sort_by = grid.request.query.get('sort_by') %}
+{% set sort_order = grid.request.query.get('sort_order', 'ASC') %}
+
+<div class="ui-table-wrap">
+    <table class="ui-table">
+        <thead>
+            <tr>
+                {% for column in grid.columns %}
+                    <th class="{{ column.getTemplateParameter('class', '') }}">
+                        {% if column.sortable %}
+                            {% set next_order = (sort_by == column.sortable and sort_order == 'ASC') ? 'DESC' : 'ASC' %}
+                            {% set sort_url = path(current_route, current_params|merge({'sort_by': column.sortable, 'sort_order': next_order})) %}
+                            
+                            <a href="{{ sort_url }}" class="text-decoration-none text-muted d-flex align-items-center gap-1">
+                                <span>{{ column.name }}</span>
+                                {% if sort_by == column.sortable %}
+                                    <i class="bi {{ sort_order == 'ASC' ? 'bi-sort-up' : 'bi-sort-down' }} text-accent"></i>
+                                {% else %}
+                                    <i class="bi bi-hash opacity-25"></i>
+                                {% endif %}
+                            </a>
+                        {% else %}
+                            {{ column.name }}
+                        {% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in grid.pagination %}
+                <tr>
+                    {% for column in grid.columns %}
+                        <td class="{{ column.getTemplateParameter('class', '') }}">
+                            {% set template = column.getTemplate(row) %}
+                            {% include [
+                                '@KibaticDatagrid/column_type/' ~ template,
+                                '@KibaticDatagrid/theme/bootstrap5/column_type/' ~ template,
+                                template
+                            ] with {
+                                'column': column,
+                                'parameters': column.templateParameters,
+                                'item': row,
+                                'value': column.getValue(row)
+                            } %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="{{ grid.columns|length }}" class="text-center py-5 ui-muted">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+                        No results found.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if grid.pagination.totalItemCount > grid.pagination.itemNumberPerPage %}
+    <div class="d-flex justify-content-center mt-4 pb-2">
+        {{ knp_pagination_render(grid.pagination) }}
+    </div>
+{% endif %}

@@ -1,0 +1,3 @@
+kibatic_datagrid:
+    # Use our premium grid template by default
+    template: 'shared/_grid.html.twig'

@@ -46,6 +46,7 @@ make probe-db
 - **[MVP REST API (human spec)](docs/api/README.md)** — contract (implemented in Symfony over time)  
 - **[Symfony setup](docs/symfony-setup.md)** — env, Doctrine, URLs  
 - **[Python worker](backend/README.md)** — what remains under `backend/app/`
+- **[NBA ingestion scripts](backend/ingestion/INGESTERS.md)** — how NBA data gets into PostgreSQL
 
 ## Makefile (documented)
 
@@ -66,6 +67,8 @@ Run **`make help`**.
 | `make worker-sync` | Ingest stats (`TOURNAMENT_ID=uuid`) |
 | `make worker-score` | Recompute scores (`LEAGUE_ID=` + `FANTASY_ROUND_ID=`) |
 | `make worker-score-batch` | Batch scoring (`SCORE_JOBS_FILE=path`) |
+| `make ingest-nba` | Import NBA players into `participants` |
+| `make ingest-nba-playoffs SLUG=…` | Import playoff series into `tournament_rounds` (`SEASON=` optional) |
 | `make db-logs` | Follow Postgres logs |
 
 Worker cron / logs: [docs/worker-automation.md](docs/worker-automation.md).
@@ -92,17 +95,23 @@ make healthcheck HEALTH_URL=http://127.0.0.1:8081/health
 ├── Makefile
 ├── README.md
 ├── docs/
-├── symfony/                 # Symfony + API Platform (primary backend)
-├── backend/
-│   ├── README.md            # Python worker scope
-│   ├── docker-compose.yml
-│   ├── pyproject.toml
-│   ├── sql/schema.sql
-│   └── app/
-│       ├── config.py
-│       ├── application/     # scoring_service, ingestion placeholder
-│       ├── domains/
-│       └── infrastructure/  # DB, persistence, ingestion adapters
+├── symfony/                   # Symfony + API Platform (HTTP API + Twig UI)
+└── backend/                   # Python batch jobs — no HTTP server
+    ├── README.md              # Python worker scope
+    ├── docker-compose.yml     # PostgreSQL via Docker
+    ├── pyproject.toml         # Python dependencies (like composer.json)
+    ├── .env                   # DATABASE_URL — copied from .env.example, never committed
+    ├── sql/schema.sql
+    ├── ingestion/             # NBA data pipeline (stats.nba.com → PostgreSQL)
+    │   ├── INGESTERS.md       # How to run each script; PHP-developer-friendly
+    │   ├── clients/           # nba_api wrappers (one per NBA endpoint)
+    │   ├── scripts/           # Entry points (run via `make ingest-nba-*`)
+    │   └── services/          # Importers — normalize API data and upsert to DB
+    └── app/
+        ├── config.py
+        ├── application/       # scoring_service, ingestion placeholder
+        ├── domains/
+        └── infrastructure/    # DB, persistence, ingestion adapters
 ```
 
 ## License

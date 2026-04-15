@@ -25,7 +25,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     normalizationContext: ['groups' => ['read']],
 )]
 #[ApiFilter(SearchFilter::class, properties: ['participant' => 'exact', 'statDefinition' => 'exact', 'season' => 'exact'])]
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: \App\Repository\ParticipantStatRepository::class)]
 #[ORM\Table(name: 'participant_stats')]
 #[ORM\UniqueConstraint(name: 'uq_participant_stats', columns: ['participant_id', 'stat_definition_id', 'season'])]
 #[ORM\HasLifecycleCallbacks]

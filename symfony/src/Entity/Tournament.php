@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\Enum\BracketType;
 use App\Entity\Traits\EntityIdTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -83,6 +84,14 @@ class Tournament
     #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
     #[Groups(['read', 'write'])]
     private array $metadata = [];
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['read', 'write'])]
+    private ?string $cmsContent = null;
+
+    #[ORM\Column(type: Types::STRING, length: 64, nullable: true, enumType: BracketType::class)]
+    #[Groups(['read', 'write'])]
+    private ?BracketType $bracketType = null;
 
     #[ORM\Column(type: Types::DATETIMETZ_IMMUTABLE)]
     #[Groups(['read'])]
@@ -231,6 +240,34 @@ class Tournament
     public function setMetadata(array $metadata): static
     {
         $this->metadata = $metadata;
+
+        return $this;
+    }
+
+    public function getCmsContent(): ?string
+    {
+        return $this->cmsContent;
+    }
+
+    public function setCmsContent(?string $cmsContent): static
+    {
+        $this->cmsContent = $cmsContent;
+
+        return $this;
+    }
+
+    public function getBracketType(): ?BracketType
+    {
+        return $this->bracketType;
+    }
+
+    public function setBracketType(BracketType|string|null $bracketType): static
+    {
+        if (is_string($bracketType)) {
+            $bracketType = $bracketType !== '' ? BracketType::from($bracketType) : null;
+        }
+
+        $this->bracketType = $bracketType;
 
         return $this;
     }

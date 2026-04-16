@@ -187,6 +187,13 @@
             </div>
         </div>
         <div class="ui-header-actions">
+            {% if tournament.metadata.bracket_url is defined and tournament.metadata.bracket_url %}
+                <a href="{{ tournament.metadata.bracket_url }}" target="_blank" rel="noopener noreferrer" class="ui-btn ui-btn--ghost">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>ESPN Bracket</span>
+                    <i class="bi bi-box-arrow-up-right small ms-1"></i>
+                </a>
+            {% endif %}
             <a href="{{ path('app_tournament_stats', {slug: tournament.slug}) }}" class="ui-btn ui-btn--primary">
                 <i class="bi bi-bar-chart-fill"></i>
                 <span>Statistics</span>

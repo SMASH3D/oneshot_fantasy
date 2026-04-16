@@ -8,7 +8,6 @@ use App\Entity\Game;
 use App\Entity\League;
 use App\Entity\Round;
 use App\Entity\Tournament;
-use App\Enum\BracketType;
 use Doctrine\ORM\EntityManagerInterface;
 use Kibatic\DatagridBundle\Grid\GridBuilder;
 use Kibatic\DatagridBundle\Grid\Template;
@@ -86,11 +85,8 @@ class TournamentController extends AbstractController
             ], template: Template::ACTIONS)
             ->getGrid();
 
-        // --- Bracket data (for NBA postseason bracket display) ---
-        $bracketRounds = [];
-        if ($tournament->getBracketType() === BracketType::NbaPostseason) {
-            $bracketRounds = $this->buildNbaPostseasonBracket($tournament, $entityManager);
-        }
+        // --- Bracket data: build whenever rounds exist (not limited to NbaPostseason) ---
+        $bracketRounds = $this->buildNbaPostseasonBracket($tournament, $entityManager);
 
         // Mock leaderboard data
         $mockLeaderboard = [

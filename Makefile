@@ -4,7 +4,7 @@
 
 .PHONY: help install install-symfony install-worker install-db start symfony-serve symfony-cc \
 	db-up db-down db-logs stop healthcheck probe-db worker-sync worker-score worker-score-batch \
-	ingest-nba ingest-nba-playoffs
+	ingest-nba ingest-nba-games ingest-nba-playoffs ingest-nba-participations
 
 # --- Paths ---
 BACKEND_DIR        := backend
@@ -99,6 +99,14 @@ worker-score-batch: ## Batch scoring (set SCORE_JOBS_FILE=path; loads backend/.e
 ingest-nba: ## Import current NBA roster into participants table (loads backend/.env)
 	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) scripts/import_nba_players.py )
 
+ingest-nba-games: ## Import NBA playoff games into games table (SLUG=required, SEASON=optional; loads backend/.env)
+	@test -n "$(SLUG)" || (echo "Usage: make ingest-nba-games SLUG=nba-playoffs-2025 [SEASON=2024-25]" >&2 && exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) ingestion/scripts/import_nba_games.py --slug "$(SLUG)" $(if $(SEASON),--season "$(SEASON)",) )
+
 ingest-nba-playoffs: ## Import NBA playoff series into tournament_rounds (SLUG=required, SEASON=optional; loads backend/.env)
 	@test -n "$(SLUG)" || (echo "Usage: make ingest-nba-playoffs SLUG=nba-playoffs-2026 [SEASON=2025-26]" >&2 && exit 1)
 	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) ingestion/scripts/import_nba_playoffs.py --slug "$(SLUG)" $(if $(SEASON),--season "$(SEASON)",) )
+
+ingest-nba-participations: ## Sync team participation status from rounds (SLUG=required; loads backend/.env)
+	@test -n "$(SLUG)" || (echo "Usage: make ingest-nba-participations SLUG=nba-playoffs-2025" >&2 && exit 1)
+	cd $(BACKEND_DIR) && ( set -a; [ -f .env ] && . ./.env; set +a; $(PY) ingestion/scripts/import_nba_participations.py --slug "$(SLUG)" )

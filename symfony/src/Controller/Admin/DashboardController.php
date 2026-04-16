@@ -35,6 +35,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToUrl('API Docs', 'fa fa-book', '/api/docs');
         yield MenuItem::section('Tournaments');
         yield MenuItem::linkTo(TournamentCrudController::class, 'Tournaments', 'fa fa-trophy');
+        yield MenuItem::linkTo(TournamentParticipationCrudController::class, 'Team Participations', 'fa fa-medal');
         yield MenuItem::linkTo(TeamCrudController::class, 'Teams', 'fa fa-flag');
         yield MenuItem::linkTo(RoundCrudController::class, 'Rounds', 'fa fa-list-ol');
         yield MenuItem::linkTo(GameCrudController::class, 'Games', 'fa fa-gamepad');

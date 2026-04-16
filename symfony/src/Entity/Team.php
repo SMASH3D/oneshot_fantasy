@@ -77,7 +77,7 @@ class Team
 
     public function __toString(): string
     {
-        return $this->city ? $this->city . ' ' . $this->name : ($this->name ?: 'Team');
+        return $this->name ?: ($this->abbreviation ?: 'Team');
     }
 
     public function getExternalId(): string

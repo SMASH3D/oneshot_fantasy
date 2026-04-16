@@ -79,6 +79,7 @@ class PlayoffsImporter:
                         continue
 
                     metadata = json.dumps({
+                        "type": "playoff",
                         "series_id": series["series_id"],
                         "wins_home": series["wins_home"],
                         "wins_away": series["wins_away"],
@@ -97,14 +98,14 @@ class PlayoffsImporter:
                             (id, tournament_id, order_index, name, canonical_key,
                              home_team_id, away_team_id, status, metadata, created_at, updated_at)
                         VALUES
-                            (gen_random_uuid(), %s, %s, %s, %s, %s, %s, %s, %s::jsonb, NOW(), NOW())
+                            (gen_random_uuid(), %s, %s, %s, %s, %s, %s, %s, %s::json, NOW(), NOW())
                         ON CONFLICT (tournament_id, order_index) DO UPDATE SET
                             name         = EXCLUDED.name,
                             canonical_key = EXCLUDED.canonical_key,
                             home_team_id = EXCLUDED.home_team_id,
                             away_team_id = EXCLUDED.away_team_id,
                             status       = EXCLUDED.status,
-                            metadata     = tournament_rounds.metadata || EXCLUDED.metadata::jsonb,
+                            metadata     = (tournament_rounds.metadata::jsonb || EXCLUDED.metadata::jsonb)::json,
                             updated_at   = NOW()
                         RETURNING id
                     """, (

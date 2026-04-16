@@ -55,9 +55,62 @@ Limitations to be aware of:
 
 ---
 
+## Running scripts
+
+**Always use the Makefile targets** — they activate the venv Python and load `.env` automatically.
+Running `python ingestion/scripts/…` with the system Python will fail because dependencies
+(psycopg2, nba_api, etc.) are inside `.venv`, not in the system.
+
+```bash
+# CORRECT
+make ingest-nba-teams
+make ingest-nba-players
+# etc.
+
+# WRONG — will fail with "No module named psycopg2"
+python ingestion/scripts/import_nba_teams.py
+```
+
+---
+
+## NBA API data source
+
+All scripts use [`nba_api`](https://github.com/swar/nba_api), a Python wrapper around
+`stats.nba.com`. The library provides Python classes for each endpoint; each class fetches JSON
+from NBA's servers and returns a pandas DataFrame. **No API key required.**
+
+Limitations to be aware of:
+- The NBA can change endpoint shapes or add rate limiting without notice.
+- Playoff-specific endpoints (`CommonPlayoffSeries`) return no data until the playoff bracket
+  is officially seeded — typically after the play-in tournament ends (late April / early May).
+- The library may throttle requests; if you hit rate limits, add a `time.sleep(1)` between calls.
+
+---
+
+## Data flow
+
+```
+stats.nba.com  ──nba_api──▶  Python scripts  ──psycopg2──▶  PostgreSQL  ◀──Doctrine──  Symfony
+```
+
+The Python layer is write-only from Symfony's perspective — it only ever inserts/updates rows.
+Symfony reads and exposes this data via its API and admin panel.
+
+---
+
 ## Available ingestion scripts
 
 Run them in this order — each script depends on the previous one having populated its tables.
+
+| # | Make target | Populates | Requires |
+|---|-------------|-----------|----------|
+| 1 | `make ingest-nba-teams` | `teams` | nothing |
+| 2 | `make ingest-nba` | `participants` | teams |
+| 3 | `make ingest-nba-stats` | `participant_stats` | participants + Symfony stat fixtures |
+| 4 | `make ingest-nba-games SLUG=…` | `games` | teams |
+| 5 | `make ingest-nba-game-stats` | `participant_game_stats` | games + participants |
+| 6 | `make ingest-nba-playoffs SLUG=… [SEASON=…]` | `tournament_rounds` | teams + tournament row in admin |
+| 7 | `make ingest-nba-participations SLUG=…` | `tournament_participations` | tournament_rounds (step 6) |
 
 ### 1. `import_nba_teams` — populate `teams`
 
@@ -162,11 +215,47 @@ The `SLUG` must match a row in the `tournaments` table (Symfony admin → Tourna
 **Requires:** teams and games imported first; tournament row created in Symfony admin
 **Re-run safe:** yes — idempotent upsert
 
+#### Round `metadata.type` field
+
+Every round upserted by this script has `"type": "playoff"` in its JSON metadata.
+Play-in rounds (created manually in the admin) should use `"type": "playin"`.
+This field is used by the participation importer to skip play-in rounds (their teams
+don't yet have fixed bracket positions).
+
 #### Why it returns 0 results early in the season
 
 `CommonPlayoffSeries` is populated by the NBA only **after the playoff bracket is officially
 set** — typically once the play-in tournament ends (late April / early May). Running it earlier
 will always return 0 series. This is a limitation of the NBA's API, not a bug in the script.
+
+---
+
+### 7. `import_nba_participations` — populate `tournament_participations`
+
+```bash
+make ingest-nba-participations SLUG=nba-playoffs-2025
+```
+
+Reads the `tournament_rounds` already populated by step 6 and derives each team's
+current status in the tournament:
+
+| Status | Meaning |
+|--------|---------|
+| `active` | Still competing in the bracket |
+| `eliminated` | Lost a completed series |
+| `champion` | Won the Finals |
+
+Run this **after** `ingest-nba-playoffs`. Re-run it any time rounds are updated (e.g. after
+each round completes) — all writes are idempotent via `ON CONFLICT (tournament_id, team_id)`.
+
+Play-in rounds (`metadata.type = "playin"`) are intentionally skipped since those teams'
+bracket seedings aren't determined until the play-in concludes.
+
+**NBA endpoint used:** none — reads from `tournament_rounds` in the database
+**Requires:** `tournament_rounds` populated (step 6)
+**Re-run safe:** yes
+
+View and manually override statuses in the Symfony admin under **Tournaments → Team Participations**.
 
 ---
 

@@ -68,7 +68,7 @@
                                     {% if homeTeam %}{{ homeTeam.abbreviation ?? homeTeam.name|slice(0, 3)|upper }}{% else %}TBD{% endif %}
                                 </span>
                                 <span class="bracket-team-name">
-                                    {% if homeTeam %}{{ homeTeam.city ? homeTeam.city ~ ' ' ~ homeTeam.name : homeTeam.name }}{% else %}TBD{% endif %}
+                                    {% if homeTeam %}{{ homeTeam.name }}{% else %}TBD{% endif %}
                                 </span>
                                 <span class="bracket-team-wins {{ homeWon ? 'wins-highlight' : '' }}">
                                     {% if round.status != 'pending' %}{{ homeWins }}{% else %}&mdash;{% endif %}
@@ -82,7 +82,7 @@
                                     {% if awayTeam %}{{ awayTeam.abbreviation ?? awayTeam.name|slice(0, 3)|upper }}{% else %}TBD{% endif %}
                                 </span>
                                 <span class="bracket-team-name">
-                                    {% if awayTeam %}{{ awayTeam.city ? awayTeam.city ~ ' ' ~ awayTeam.name : awayTeam.name }}{% else %}TBD{% endif %}
+                                    {% if awayTeam %}{{ awayTeam.name }}{% else %}TBD{% endif %}
                                 </span>
                                 <span class="bracket-team-wins {{ awayWon ? 'wins-highlight' : '' }}">
                                     {% if round.status != 'pending' %}{{ awayWins }}{% else %}&mdash;{% endif %}
